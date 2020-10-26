@@ -22,7 +22,6 @@
  */
 
 #include "ScriptMgr.h"
-#include "Item.h"
 #include "ItemTemplate.h"
 #include "Optional.h"
 #include "Player.h"
@@ -72,11 +71,7 @@ enum WarriorSpells
     SPELL_WARRIOR_GLYPH_OF_BLOCKING                 = 58374,
     SPELL_WARRIOR_STOICISM                          = 70845,
     SPELL_WARRIOR_T10_MELEE_4P_BONUS                = 70847,
-    SPELL_WARRIOR_INTERVENE_THREAT                  = 59667,
-    SPELL_WARRIOR_SINGLE_MINDED_FURY                = 81057,
-    SPELL_WARRIOR_SLAM_OFF_HAND_R1                  = 81058,
-    SPELL_WARRIOR_SLAM_OH                           = 81059,
-    SPELL_WARRIOR_SHIELD_WALL                       = 871
+    SPELL_WARRIOR_INTERVENE_THREAT                  = 59667
 };
 
 enum WarriorSpellIcons
@@ -106,12 +101,10 @@ class spell_warr_bloodthirst : public SpellScriptLoader
             void HandleDamage(SpellEffIndex /*effIndex*/)
             {
                 uint32 APbonus = GetCaster()->GetTotalAttackPowerValue(BASE_ATTACK);
-                uint32 baseBonus = GetCaster()->GetLevel();
-                baseBonus *= 20.625f;
                 if (Unit* victim = GetHitUnit())
                     APbonus += victim->GetTotalAuraModifier(SPELL_AURA_MELEE_ATTACK_POWER_ATTACKER_BONUS);
 
-                SetEffectValue(CalculatePct(APbonus, GetEffectValue()) + baseBonus);
+                SetEffectValue(CalculatePct(APbonus, GetEffectValue()));
             }
 
             void HandleDummy(SpellEffIndex /*effIndex*/)
@@ -414,14 +407,6 @@ class spell_warr_execute : public SpellScriptLoader
 
 
                     int32 bp = GetEffectValue() + int32(rageUsed * spellInfo->Effects[effIndex].DamageMultiplier + caster->GetTotalAttackPowerValue(BASE_ATTACK) * 0.2f);
-                    // Sudden Death custom
-                    if (AuraEffect* aurEff = caster->GetAuraEffectOfRankedSpell(52437, EFFECT_1))
-                    {
-                        if (GetHitUnit()->GetTypeId() == TYPEID_PLAYER || GetHitUnit()->IsPet() || GetHitUnit()->IsGuardian())
-                            bp = bp;
-                        else
-                            AddPct(bp, aurEff->GetAmount());
-                    }
                     CastSpellExtraArgs args(GetOriginalCaster()->GetGUID());
                     args.AddSpellBP0(bp);
                     caster->CastSpell(target, SPELL_WARRIOR_EXECUTE, args);
@@ -1044,9 +1029,6 @@ class spell_warr_sword_and_board : public SpellScriptLoader
                     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(itr->first);
                     return spellInfo && spellInfo->GetCategory() == SPELL_CATEGORY_SHIELD_SLAM;
                 }, true);
-
-                // Reduce cooldown on Shield Block
-                GetCaster()->GetSpellHistory()->ModifyCooldown(2565, -(2 * IN_MILLISECONDS));
             }
 
             void Register() override
@@ -1229,143 +1211,6 @@ class spell_warr_vigilance_trigger : public SpellScriptLoader
         }
 };
 
-class spell_warr_single_minded_fury : public SpellScriptLoader
-{
-public:
-    spell_warr_single_minded_fury() : SpellScriptLoader("spell_warr_single_minded_fury") { }
-
-    class spell_warr_single_minded_fury_AuraScript : public AuraScript
-    {
-        PrepareAuraScript(spell_warr_single_minded_fury_AuraScript);
-
-        bool Validate(SpellInfo const* /*spellInfo*/) override
-        {
-            return ValidateSpellInfo(
-                {
-                    SPELL_WARRIOR_SINGLE_MINDED_FURY,
-                    SPELL_WARRIOR_SLAM_OFF_HAND_R1
-                });
-        }
-
-        void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-        {
-            PreventDefaultAction();
-
-            SpellInfo const* spellInfo = eventInfo.GetSpellInfo();
-            if (!spellInfo)
-                return;
-
-            // Must dual wield
-            Unit* caster = eventInfo.GetActor();
-            if (!caster->haveOffhandWeapon())
-                return;
-
-            // Do not work with 2H weapons
-            if (caster->GetTypeId() == TYPEID_PLAYER)
-                if (Item* item = caster->ToPlayer()->GetWeaponForAttack(BASE_ATTACK, true))
-                    if (item->GetTemplate()->InventoryType == INVTYPE_2HWEAPON)
-                        return;
-
-            uint32 spellId = 0;
-            // Slam
-            if (spellInfo->SpellFamilyFlags[0] & 0x00200000)
-                spellId = SPELL_WARRIOR_SLAM_OFF_HAND_R1;
-
-            if (!spellId)
-                return;
-
-            spellId = sSpellMgr->GetSpellWithRank(spellId, spellInfo->GetRank());
-            caster->CastSpell(eventInfo.GetProcTarget(), spellId, aurEff);
-        }
-
-        void Register() override
-        {
-            OnEffectProc += AuraEffectProcFn(spell_warr_single_minded_fury_AuraScript::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-        }
-    };
-
-    AuraScript* GetAuraScript() const override
-    {
-        return new spell_warr_single_minded_fury_AuraScript();
-    }
-};
-
-// Slam Off-Hand
-class spell_warr_slam_oh : public SpellScriptLoader
-{
-public:
-    spell_warr_slam_oh() : SpellScriptLoader("spell_warr_slam_oh") { }
-
-    class spell_warr_slam_oh_SpellScript : public SpellScript
-    {
-        PrepareSpellScript(spell_warr_slam_oh_SpellScript);
-
-        bool Validate(SpellInfo const* /*spellInfo*/) override
-        {
-            return ValidateSpellInfo({ SPELL_WARRIOR_SLAM_OH });
-        }
-
-        void HandleDummy(SpellEffIndex /*effIndex*/)
-        {
-            if (!GetHitUnit())
-                return;
-            CastSpellExtraArgs args(TRIGGERED_FULL_MASK);
-            args.AddSpellBP0(GetEffectValue());
-            GetCaster()->CastSpell(GetHitUnit(), SPELL_WARRIOR_SLAM_OH, args);
-        }
-
-        void Register() override
-        {
-            OnEffectHitTarget += SpellEffectFn(spell_warr_slam_oh_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
-        }
-    };
-
-    SpellScript* GetSpellScript() const override
-    {
-        return new spell_warr_slam_oh_SpellScript();
-    }
-};
-
-// Shield Wall
-class spell_warr_shield_wall : public SpellScriptLoader
-{
-public:
-    spell_warr_shield_wall() : SpellScriptLoader("spell_warr_shield_wall") { }
-
-    class spell_warr_shield_wall_AuraScript : public AuraScript
-    {
-        PrepareAuraScript(spell_warr_shield_wall_AuraScript);
-
-        bool Validate(SpellInfo const* /*spellInfo*/) override
-        {
-            return ValidateSpellInfo({ SPELL_WARRIOR_SHIELD_WALL });
-        }
-
-        void HandleEffectApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
-        {
-            Unit* caster = GetCaster();
-            uint32 durationBase = aurEff->GetBase()->GetMaxDuration();
-            uint32 durationMax = aurEff->GetSpellInfo()->GetMaxDuration();
-
-            if (Aura* petrifiedDragonEye = caster->GetAura(81252))
-            {
-                aurEff->GetBase()->SetDuration(aurEff->GetBase()->GetDuration() + 4000);
-                aurEff->GetBase()->SetMaxDuration(durationBase + 4000);
-            }
-        }
-
-        void Register() override
-        {
-            AfterEffectApply += AuraEffectApplyFn(spell_warr_shield_wall_AuraScript::HandleEffectApply, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN, AURA_EFFECT_HANDLE_REAL);
-        }
-    };
-
-    AuraScript* GetAuraScript() const override
-    {
-        return new spell_warr_shield_wall_AuraScript();
-    }
-};
-
 void AddSC_warrior_spell_scripts()
 {
     new spell_warr_bloodthirst();
@@ -1396,7 +1241,4 @@ void AddSC_warrior_spell_scripts()
     new spell_warr_vigilance();
     new spell_warr_vigilance_redirect_threat();
     new spell_warr_vigilance_trigger();
-    new spell_warr_single_minded_fury();
-    new spell_warr_slam_oh();
-    new spell_warr_shield_wall();
 }

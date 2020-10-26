@@ -6727,7 +6727,7 @@ float Unit::SpellDamagePctDone(Unit* victim, SpellInfo const* spellProto, Damage
                 {
                     // Glyph of Ice Lance
                     if (owner->HasAura(56377) && victim->GetLevel() > owner->GetLevel())
-                        DoneTotalMod *= 5.0f;
+                        DoneTotalMod *= 4.0f;
                     else
                         DoneTotalMod *= 3.0f;
                 }
@@ -7096,13 +7096,6 @@ float Unit::SpellCritChanceTaken(Unit const* caster, SpellInfo const* spellInfo,
                                     crit_chance += aurEff->GetAmount();
                             break;
                         }
-                        break;
-                    case SPELLFAMILY_PRIEST:
-                        // Improved Flash Heal
-                        if (spellInfo->SpellFamilyFlags[0] & 0x800 || spellInfo->SpellFamilyFlags[1] & 0x4)
-                            if (AuraEffect const* aura = caster->GetAuraEffectOfRankedSpell(63504, 0))
-                            if (!HealthAbovePct(50))
-                            crit_chance += aura->GetAmount();
                         break;
                     case SPELLFAMILY_ROGUE:
                         // Shiv-applied poisons can't crit

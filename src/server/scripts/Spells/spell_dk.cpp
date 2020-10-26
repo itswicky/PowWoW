@@ -530,7 +530,7 @@ class spell_dk_blood_gorged : public SpellScriptLoader
                     return;
 
                 CastSpellExtraArgs args(aurEff);
-                args.AddSpellBP0(damageInfo->GetDamage() * 0.75f);
+                args.AddSpellBP0(damageInfo->GetDamage() * 1.5f);
                 GetTarget()->CastSpell(_procTarget, SPELL_DK_BLOOD_GORGED_HEAL, args);
             }
 
@@ -1338,39 +1338,16 @@ class spell_dk_frost_fever : public AuraScript
 {
     PrepareAuraScript(spell_dk_frost_fever);
 
-    void HandleEffectApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
-    {
-        Unit * caster = GetCaster();
-        Unit * target = GetTarget();
-        
-        if (AuraEffect* glacierRot = caster->GetAuraEffectOfRankedSpell(49471/*Glacier Rot Talent*/, EFFECT_0))
-            if (roll_chance_i(glacierRot->GetSpellInfo()->ProcChance))
-                caster->AddAura(81081/*Glacier Rot Debuff*/, target);
-    }
-
     void HandleDispel(DispelInfo* /*dispelInfo*/)
     {
         if (Unit* caster = GetCaster())
             if (AuraEffect* icyClutch = GetUnitOwner()->GetAuraEffect(SPELL_AURA_MOD_DECREASE_SPEED, SPELLFAMILY_DEATHKNIGHT, 0, 0x00040000, 0, caster->GetGUID()))
                 GetUnitOwner()->RemoveAurasDueToSpell(icyClutch->GetId());
-
-        if (Unit* caster = GetCaster())
-            if (AuraEffect* glacierRot = GetUnitOwner()->GetAuraEffect(SPELL_AURA_MOD_ATTACKER_SPELL_AND_WEAPON_CRIT_CHANCE, SPELLFAMILY_DEATHKNIGHT, 0, 0, 0x00000400, caster->GetGUID()))
-                GetUnitOwner()->RemoveAurasDueToSpell(glacierRot->GetId());
-    }
-
-    void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
-    {
-        if (Unit* caster = GetCaster())
-            if (AuraEffect* glacierRot = GetUnitOwner()->GetAuraEffect(SPELL_AURA_MOD_ATTACKER_SPELL_AND_WEAPON_CRIT_CHANCE, SPELLFAMILY_DEATHKNIGHT, 0, 0, 0x00000400, caster->GetGUID()))
-                GetUnitOwner()->RemoveAura(glacierRot->GetId());
     }
 
     void Register() override
     {
-        AfterEffectApply += AuraEffectApplyFn(spell_dk_frost_fever::HandleEffectApply, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
         AfterDispel += AuraDispelFn(spell_dk_frost_fever::HandleDispel);
-        AfterEffectRemove += AuraEffectRemoveFn(spell_dk_frost_fever::HandleEffectRemove, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1421,19 +1398,6 @@ class spell_dk_icebound_fortitude : public SpellScriptLoader
                 return caster && caster->GetTypeId() == TYPEID_PLAYER;
             }
 
-            void HandleEffectApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
-            {
-                Unit * caster = GetCaster();
-                uint32 durationBase = aurEff->GetBase()->GetMaxDuration();
-                uint32 durationMax = aurEff->GetSpellInfo()->GetMaxDuration();
-                
-                    if (Aura* petrifiedDragonEye = caster->GetAura(81252))
-                    {
-                        aurEff->GetBase()->SetDuration(aurEff->GetBase()->GetDuration() + 4000);
-                        aurEff->GetBase()->SetMaxDuration(durationBase + 4000);
-                    }
-            }
-
             void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
             {
                 if (Unit* caster = GetCaster())
@@ -1457,7 +1421,6 @@ class spell_dk_icebound_fortitude : public SpellScriptLoader
 
             void Register() override
             {
-                AfterEffectApply += AuraEffectApplyFn(spell_dk_icebound_fortitude_AuraScript::HandleEffectApply, EFFECT_2, SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN, AURA_EFFECT_HANDLE_REAL);
                 DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_dk_icebound_fortitude_AuraScript::CalculateAmount, EFFECT_2, SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN);
             }
         };

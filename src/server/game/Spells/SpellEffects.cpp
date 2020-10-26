@@ -461,41 +461,6 @@ void Spell::EffectSchoolDMG(SpellEffIndex effIndex)
                 }
                 break;
             }
-            case SPELLFAMILY_MAGE:
-            {
-                if (!unitCaster)
-                    break;
-
-                // Fireball
-                if (m_spellInfo->SpellFamilyFlags[0] & 0x1)
-                {
-                    if (AuraEffect const* aurEff = unitCaster->GetAuraEffect(57761, 2))
-                    {
-                        int32 bonus = unitCaster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE) * 0.5f + damage * 0.5f;
-
-                        if (unitTarget->GetTypeId() == TYPEID_PLAYER || unitTarget->IsPet() || unitTarget->IsGuardian())
-                            damage = damage;
-                        else
-                            damage += bonus;
-                        break;
-                    }
-                }
-                // Frostfire Bolt
-                if (m_spellInfo->SpellFamilyFlags[1] & 0x1000)
-                {
-                    if (AuraEffect const* aurEff = unitCaster->GetAuraEffect(57761, 2))
-                    {
-                        int32 bonus = unitCaster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FROST) * 0.4285f + damage * 0.5f;
-
-                        if (unitTarget->GetTypeId() == TYPEID_PLAYER || unitTarget->IsPet() || unitTarget->IsGuardian())
-                            damage = damage;
-                        else
-                            damage += bonus;
-                        break;
-                    }
-                }
-                break;
-            }
             case SPELLFAMILY_PRIEST:
             {
                 if (!unitCaster)
@@ -699,68 +664,6 @@ void Spell::EffectSchoolDMG(SpellEffIndex effIndex)
                     damage += CalculatePct(block_value, m_spellInfo->Effects[EFFECT_1].CalcValue());
                     break;
                 }
-                // Exorcism
-                if (m_spellInfo->SpellFamilyFlags[1] & 0x2)
-                {
-                    // The Art of War r1
-                    if (AuraEffect const* aurEff = unitCaster->GetAuraEffect(53489, 1))
-                    {
-                        if (unitTarget->GetTypeId() == TYPEID_PLAYER || unitTarget->IsPet() || unitTarget->IsGuardian())
-                            damage = damage;
-                        else
-                            AddPct(damage, aurEff->GetAmount());
-                            damage += int32(unitCaster->GetTotalAttackPowerValue(BASE_ATTACK) * 0.0375f);
-                            damage += int32(unitCaster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY) * 0.0375f);
-                            break;
-                    }
-                    // The Art of War r2
-                    if (AuraEffect const* aurEff = unitCaster->GetAuraEffect(59578, 1))
-                    {
-                        if (unitTarget->GetTypeId() == TYPEID_PLAYER || unitTarget->IsPet() || unitTarget->IsGuardian())
-                            damage = damage;
-                        else
-                            AddPct(damage, aurEff->GetAmount());
-                            damage += int32(unitCaster->GetTotalAttackPowerValue(BASE_ATTACK) * 0.075f);
-                            damage += int32(unitCaster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY) * 0.075f);
-                            break;
-                    }
-                }
-                break;
-            }
-            case SPELLFAMILY_SHAMAN:
-            {
-                // Lightning Bolt
-                if (m_spellInfo->SpellFamilyFlags[0] & 0x1)
-                {
-                    if (Aura* maelstrom = unitCaster->GetAura(53817))
-                    {
-                        int32 stacks = maelstrom->GetStackAmount();
-                        int32 bonus = stacks * 4;
-
-                        if (unitTarget->GetTypeId() == TYPEID_PLAYER || unitTarget->IsPet() || unitTarget->IsGuardian())
-                            damage = damage;
-                        else
-                            AddPct(damage, bonus);
-                            damage += int32(unitCaster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_NATURE) * 0.028572f * stacks);
-                            break;
-                    }
-                }
-                // Chain Lightning
-                if (m_spellInfo->SpellFamilyFlags[0] & 0x2)
-                {
-                    if (Aura* maelstrom = unitCaster->GetAura(53817))
-                    {
-                        int32 stacks = maelstrom->GetStackAmount();
-                        int32 bonus = stacks * 4;
-
-                        if (unitTarget->GetTypeId() == TYPEID_PLAYER || unitTarget->IsPet() || unitTarget->IsGuardian())
-                            damage = damage;
-                        else
-                            AddPct(damage, bonus);
-                            damage += int32(unitCaster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_NATURE) * 0.0228f * stacks);
-                            break;
-                    }
-                }
                 break;
             }
             case SPELLFAMILY_DEATHKNIGHT:
@@ -839,17 +742,6 @@ void Spell::EffectTriggerSpell(SpellEffIndex effIndex)
                 // Glyph of Mirror Image
                 if (unitCaster->HasAura(63093))
                     unitCaster->CastSpell(nullptr, 65047, true); // Mirror Image
-                break;
-            }
-            // Garrote
-            case 1330:
-            {
-                if (!unitCaster)
-                    break;
-
-                // Glyph of Bloodletting
-                if (unitCaster->HasAura(81052))
-                    return;
                 break;
             }
             // Demonic Empowerment -- succubus
@@ -3180,7 +3072,7 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
                 if (unitCaster->GetTypeId() == TYPEID_PLAYER)
                     if (Item* item = unitCaster->ToPlayer()->GetWeaponForAttack(m_attackType, true))
                         if (item->GetTemplate()->SubClass == ITEM_SUBCLASS_WEAPON_DAGGER)
-                            totalDamagePercentMod *= 1.6f;
+                            totalDamagePercentMod *= 1.5f;
             }
             // Mutilate (for each hand)
             else if (m_spellInfo->SpellFamilyFlags[1] & 0x6)
@@ -3215,15 +3107,6 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
             {
                 spell_bonus += int32(0.08f * unitCaster->GetTotalAttackPowerValue(BASE_ATTACK));
                 spell_bonus += int32(0.13f * unitCaster->SpellBaseDamageBonusDone(m_spellInfo->GetSchoolMask()));
-                break;
-            }
-            // Crusader Strike
-            if (m_spellInfo->SpellFamilyFlags[1] & 0x8000)
-            {
-                if (unitTarget->GetTypeId() == TYPEID_PLAYER || unitTarget->IsPet() || unitTarget->IsGuardian())
-                    totalDamagePercentMod *= 0.83f;
-                else
-                    totalDamagePercentMod = totalDamagePercentMod;
             }
             break;
         }
@@ -3233,13 +3116,6 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
             // Stormstrike
             if (AuraEffect* aurEff = unitCaster->IsScriptOverriden(m_spellInfo, 5634))
                 unitCaster->CastSpell(nullptr, 38430, aurEff);
-
-            // Stormstrike
-            if (m_spellInfo->SpellFamilyFlags[2] & 0x400)
-                if (unitCaster->GetTypeId() == TYPEID_PLAYER)
-                    if (Item* item = unitCaster->ToPlayer()->GetWeaponForAttack(m_attackType, true))
-                        if (item->GetTemplate()->InventoryType == INVTYPE_2HWEAPON)
-                            AddPct(totalDamagePercentMod, 20);
             break;
         }
         case SPELLFAMILY_DRUID:
@@ -3271,13 +3147,6 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
                 // Glyph of Plague Strike
                 if (AuraEffect const* aurEff = unitCaster->GetAuraEffect(58657, EFFECT_0))
                     AddPct(totalDamagePercentMod, aurEff->GetAmount());
-
-                // Threat of Thassarian (custom)
-                if (AuraEffect const* aurEffR1 = unitCaster->GetAuraEffectOfRankedSpell(65661, EFFECT_1))
-                    if (unitCaster->GetTypeId() == TYPEID_PLAYER)
-                    if (Item* item = unitCaster->ToPlayer()->GetWeaponForAttack(m_attackType, true))
-                    if (item->GetTemplate()->InventoryType == INVTYPE_2HWEAPON)
-                    AddPct(totalDamagePercentMod, aurEffR1->GetAmount());
                 break;
             }
             // Blood Strike
@@ -3291,17 +3160,8 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
 
                 // Glyph of Blood Strike
                 if (unitCaster->GetAuraEffect(59332, EFFECT_0))
-                    if (unitCaster->GetTypeId() == TYPEID_PLAYER)
-                        if (Item* item = unitCaster->ToPlayer()->GetWeaponForAttack(m_attackType, true))
-                            if (item->GetTemplate()->InventoryType == INVTYPE_2HWEAPON)
-                                AddPct(totalDamagePercentMod, 20);
-
-                // Threat of Thassarian (custom)
-                if (AuraEffect const* aurEffR1 = unitCaster->GetAuraEffectOfRankedSpell(65661, EFFECT_1))
-                    if (unitCaster->GetTypeId() == TYPEID_PLAYER)
-                    if (Item* item = unitCaster->ToPlayer()->GetWeaponForAttack(m_attackType, true))
-                    if (item->GetTemplate()->InventoryType == INVTYPE_2HWEAPON)
-                    AddPct(totalDamagePercentMod, aurEffR1->GetAmount());
+                    if (unitTarget->HasAuraType(SPELL_AURA_MOD_DECREASE_SPEED))
+                       AddPct(totalDamagePercentMod, 20);
                 break;
             }
             // Death Strike
@@ -3311,13 +3171,6 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
                 if (AuraEffect const* aurEff = unitCaster->GetAuraEffect(59336, EFFECT_0))
                     if (uint32 runic = std::min<uint32>(unitCaster->GetPower(POWER_RUNIC_POWER), aurEff->GetSpellInfo()->Effects[EFFECT_1].CalcValue()))
                         AddPct(totalDamagePercentMod, runic);
-
-                // Threat of Thassarian (custom)
-                if (AuraEffect const* aurEffR1 = unitCaster->GetAuraEffectOfRankedSpell(65661, EFFECT_1))
-                    if (unitCaster->GetTypeId() == TYPEID_PLAYER)
-                        if (Item* item = unitCaster->ToPlayer()->GetWeaponForAttack(m_attackType, true))
-                            if (item->GetTemplate()->InventoryType == INVTYPE_2HWEAPON)
-                                AddPct(totalDamagePercentMod, aurEffR1->GetAmount());
                 break;
             }
             // Obliterate (12.5% more damage per disease)
@@ -3335,13 +3188,6 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
                 if (AuraEffect const* aurEff = unitCaster->GetAuraEffect(64736, EFFECT_0))
                     AddPct(bonusPct, aurEff->GetAmount());
                 AddPct(totalDamagePercentMod, bonusPct);
-
-                // Threat of Thassarian (custom)
-                if (AuraEffect const* aurEffR1 = unitCaster->GetAuraEffectOfRankedSpell(65661, EFFECT_1))
-                    if (unitCaster->GetTypeId() == TYPEID_PLAYER)
-                        if (Item* item = unitCaster->ToPlayer()->GetWeaponForAttack(m_attackType, true))
-                            if (item->GetTemplate()->InventoryType == INVTYPE_2HWEAPON)
-                                AddPct(totalDamagePercentMod, aurEffR1->GetAmount());
                 break;
             }
             // Blood-Caked Strike - Blood-Caked Blade
@@ -3359,28 +3205,6 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
                     AddPct(bonusPct, aurEff->GetAmount());
 
                 AddPct(totalDamagePercentMod, bonusPct);
-                break;
-            }
-            // Rune Strike
-            if (m_spellInfo->SpellFamilyFlags[1] & 0x20000000)
-            {
-                // Threat of Thassarian (custom)
-                if (AuraEffect const* aurEffR1 = unitCaster->GetAuraEffectOfRankedSpell(65661, EFFECT_1))
-                    if (unitCaster->GetTypeId() == TYPEID_PLAYER)
-                        if (Item* item = unitCaster->ToPlayer()->GetWeaponForAttack(m_attackType, true))
-                            if (item->GetTemplate()->InventoryType == INVTYPE_2HWEAPON)
-                                AddPct(totalDamagePercentMod, aurEffR1->GetAmount());
-                break;
-            }
-            // Frost Strike
-            if (m_spellInfo->SpellFamilyFlags[1] & 0x4)
-            {
-                // Threat of Thassarian (custom)
-                if (AuraEffect const* aurEffR1 = unitCaster->GetAuraEffectOfRankedSpell(65661, EFFECT_1))
-                    if (unitCaster->GetTypeId() == TYPEID_PLAYER)
-                        if (Item* item = unitCaster->ToPlayer()->GetWeaponForAttack(m_attackType, true))
-                            if (item->GetTemplate()->InventoryType == INVTYPE_2HWEAPON)
-                                AddPct(totalDamagePercentMod, aurEffR1->GetAmount());
                 break;
             }
             break;

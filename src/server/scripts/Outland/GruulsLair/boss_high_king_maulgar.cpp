@@ -161,7 +161,7 @@ public:
             if (MightyBlow_Timer <= diff)
             {
                 DoCastVictim(SPELL_MIGHTY_BLOW);
-                MightyBlow_Timer = urand(30000, 40000);
+                MightyBlow_Timer = 30000 + rand32() % 10000;
             } else MightyBlow_Timer -= diff;
 
             //Entering Phase 2
@@ -180,7 +180,7 @@ public:
                 //Charging_Timer
                 if (Charging_Timer <= diff)
                 {
-                    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
+                    if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0))
                     {
                         AttackStart(target);
                         DoCast(target, SPELL_BERSERKER_C);
@@ -192,7 +192,7 @@ public:
                 if (Roar_Timer <= diff)
                 {
                     DoCast(me, SPELL_ROAR);
-                    Roar_Timer = urand(40000, 50000);
+                    Roar_Timer = 40000 + (rand32() % 10000);
                 } else Roar_Timer -= diff;
             }
 
@@ -221,7 +221,7 @@ public:
 
         void Initialize()
         {
-            DarkDecay_Timer = 11000;
+            DarkDecay_Timer = 10000;
             Summon_Timer = 15000;
             DeathCoil_Timer = 20000;
         }
@@ -237,9 +237,21 @@ public:
             Initialize();
 
             instance->SetBossState(DATA_MAULGAR, NOT_STARTED);
+        }
 
-            if (Creature* summon = GetClosestCreatureWithEntry(me, 18847, 500.0f))
-                summon->DespawnOrUnsummon();
+        void AttackStart(Unit* who) override
+        {
+            if (!who)
+                return;
+
+            if (me->Attack(who, true))
+            {
+                AddThreat(who, 0.0f);
+                me->SetInCombatWith(who);
+                who->SetInCombatWith(me);
+
+                me->GetMotionMaster()->MoveChase(who, 30.0f);
+            }
         }
 
         void JustEngagedWith(Unit* /*who*/) override
@@ -265,7 +277,7 @@ public:
             if (DarkDecay_Timer <= diff)
             {
                 DoCastVictim(SPELL_DARK_DECAY);
-                DarkDecay_Timer = 10000;
+                DarkDecay_Timer = 20000;
             } else DarkDecay_Timer -= diff;
 
             //Summon_Timer
@@ -278,7 +290,7 @@ public:
             //DeathCoil Timer /need correct timer
             if (DeathCoil_Timer <= diff)
             {
-                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
+                if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0))
                     DoCast(target, SPELL_DEATH_COIL);
                 DeathCoil_Timer = 20000;
             } else DeathCoil_Timer -= diff;
@@ -351,7 +363,7 @@ public:
             //GreaterPolymorph_Timer
             if (GreaterPolymorph_Timer <= diff)
             {
-                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
+                if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0))
                     DoCast(target, SPELL_GREATER_POLYMORPH);
 
                 GreaterPolymorph_Timer = urand(15000, 20000);

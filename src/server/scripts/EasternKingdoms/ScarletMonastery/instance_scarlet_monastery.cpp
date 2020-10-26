@@ -16,17 +16,11 @@
  */
 
 #include "scarlet_monastery.h"
-#include "AreaBoundary.h"
 #include "Creature.h"
 #include "GameObject.h"
 #include "InstanceScript.h"
 #include "Map.h"
 #include "ScriptMgr.h"
-
-BossBoundaryData const boundaries =
-{
-    { DATA_HEROD, new CircleBoundary(Position(1964.92f, -431.52f), Position(1933.024f, -431.4098f)) }, // will not chase outside room
-};
 
 ObjectData const creatureData[] =
 {
@@ -35,7 +29,6 @@ ObjectData const creatureData[] =
     { NPC_MOGRAINE,  DATA_MOGRAINE  },
     { NPC_VORREL,    DATA_VORREL    },
     { NPC_WHITEMANE, DATA_WHITEMANE },
-    { NPC_HEROD,     DATA_HEROD     },
     { 0,             0              } // END
 };
 
@@ -43,14 +36,7 @@ ObjectData const gameObjectData[] =
 {
     { GO_PUMPKIN_SHRINE,        DATA_PUMPKIN_SHRINE        },
     { GO_HIGH_INQUISITORS_DOOR, DATA_HIGH_INQUISITORS_DOOR },
-    { GO_HERODS_DOOR,           DATA_HERODS_DOOR           },
     { 0,                        0                          } // END
-};
-
-DoorData const doorData[] =
-{
-    { GO_HERODS_DOOR,           DATA_HEROD,         DOOR_TYPE_ROOM },
-    { 0,                        0,                  DOOR_TYPE_ROOM }
 };
 
 class instance_scarlet_monastery : public InstanceMapScript
@@ -60,14 +46,10 @@ class instance_scarlet_monastery : public InstanceMapScript
 
         struct instance_scarlet_monastery_InstanceMapScript : public InstanceScript
         {
-            ObjectGuid HerodsDoorGUID;
-
             instance_scarlet_monastery_InstanceMapScript(Map* map) : InstanceScript(map)
             {
                 SetHeaders(DataHeader);
                 SetBossNumber(EncounterCount);
-                LoadBossBoundaries(boundaries);
-                LoadDoorData(doorData);
                 LoadObjectData(creatureData, gameObjectData);
             }
 
@@ -78,26 +60,11 @@ class instance_scarlet_monastery : public InstanceMapScript
                     case NPC_PUMPKIN:
                         HorsemanAdds.insert(creature->GetGUID());
                         break;
-                    case NPC_HEROD:
-                        HerodGUID = creature->GetGUID();
-                        break;
                     default:
                         break;
                 }
 
                 InstanceScript::OnCreatureCreate(creature);
-            }
-
-            void OnGameObjectCreate(GameObject* go) override
-            {
-                switch (go->GetEntry())
-                {
-                    case GO_HERODS_DOOR:
-                        HerodsDoorGUID = go->GetGUID();
-                        break;
-                }
-
-                InstanceScript::OnGameObjectCreate(go);
             }
 
             bool SetBossState(uint32 type, EncounterState state) override
@@ -128,20 +95,8 @@ class instance_scarlet_monastery : public InstanceMapScript
                 return true;
             }
 
-            ObjectGuid GetGuidData(uint32 Data) const override
-            {
-                switch (Data)
-                {
-                    case DATA_HEROD:
-                        return HerodGUID;
-                }
-
-                return ObjectGuid::Empty;
-            }
-
         protected:
             GuidUnorderedSet HorsemanAdds;
-            ObjectGuid HerodGUID;
         };
 
         InstanceScript* GetInstanceScript(InstanceMap* map) const override

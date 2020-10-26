@@ -1148,7 +1148,6 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         bool IsUseEquipedWeapon(bool mainhand) const;
         bool IsTwoHandUsed() const;
         bool IsUsingTwoHandedWeaponInOneHand() const;
-        bool IsUsingOneHandedWeaponInBothHands() const;
         void SendNewItem(Item* item, uint32 count, bool received, bool created, bool broadcast = false, bool sendChatMessage = true);
         bool BuyItemFromVendorSlot(ObjectGuid vendorguid, uint32 vendorslot, uint32 item, uint8 count, uint8 bag, uint8 slot);
         bool _StoreOrEquipNewItem(uint32 vendorslot, uint32 item, uint8 count, uint8 bag, uint8 slot, int32 price, ItemTemplate const* pProto, Creature* pVendor, VendorItem const* crItem, bool bStore);
@@ -1821,7 +1820,6 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         bool CanTitanGrip() const { return m_canTitanGrip; }
         void SetCanTitanGrip(bool value, uint32 penaltySpellId = 0);
         void CheckTitanGripPenalty();
-        void CheckSingleMindedFuryBonus();
         bool CanTameExoticPets() const { return IsGameMaster() || HasAuraType(SPELL_AURA_ALLOW_TAME_PET_TYPE); }
 
         void SetRegularAttackTime();

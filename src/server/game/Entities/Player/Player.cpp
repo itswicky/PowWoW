@@ -3428,7 +3428,7 @@ bool Player::AddSpell(uint32 spellId, bool active, bool learning, bool dependent
             uint32 skill_max_value = GetPureMaxSkillValue(spellLearnSkill->skill);
 
             if (skill_value < spellLearnSkill->value)
-                skill_value = (spellLearnSkill->value + 349.0f);
+                skill_value = spellLearnSkill->value;
 
             uint32 new_skill_max_value = spellLearnSkill->maxvalue == 0 ? GetMaxSkillValueForLevel() : spellLearnSkill->maxvalue;
 
@@ -12231,10 +12231,7 @@ Item* Player::EquipItem(uint16 pos, Item* pItem, bool update)
     }
 
     if (slot == EQUIPMENT_SLOT_MAINHAND || slot == EQUIPMENT_SLOT_OFFHAND)
-    {
         CheckTitanGripPenalty();
-        CheckSingleMindedFuryBonus();
-    }
 
     // only for full equip instead adding to stack
     UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EQUIP_ITEM, pItem->GetEntry());
@@ -12260,10 +12257,7 @@ void Player::QuickEquipItem(uint16 pos, Item* pItem)
         }
 
         if (slot == EQUIPMENT_SLOT_MAINHAND || slot == EQUIPMENT_SLOT_OFFHAND)
-        {
             CheckTitanGripPenalty();
-            CheckSingleMindedFuryBonus();
-        }
 
         UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EQUIP_ITEM, pItem->GetEntry());
         UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EQUIP_EPIC_ITEM, slot, pItem->GetEntry());
@@ -12385,10 +12379,7 @@ void Player::RemoveItem(uint8 bag, uint8 slot, bool update)
             {
                 SetVisibleItemSlot(slot, nullptr);
                 if (slot == EQUIPMENT_SLOT_MAINHAND || slot == EQUIPMENT_SLOT_OFFHAND)
-                {
                     CheckTitanGripPenalty();
-                    CheckSingleMindedFuryBonus();
-                }
             }
         }
         else if (Bag* pBag = GetBagByPos(bag))
@@ -13504,19 +13495,6 @@ void Player::CheckTitanGripPenalty()
         RemoveAurasDueToSpell(m_titanGripPenaltySpellId);
 }
 
-void Player::CheckSingleMindedFuryBonus()
-{
-    bool apply = IsUsingOneHandedWeaponInBothHands();
-    if (apply)
-    {
-        if (!HasAura(81067)) /* Single Minded Fury damage bonus */
-            if (HasAura(81057)) /* Single Minded Fury talent */
-                CastSpell((Unit*)nullptr, 81067, true);
-    }
-    else
-        RemoveAurasDueToSpell(81067);
-}
-
 bool Player::IsTwoHandUsed() const
 {
     Item* mainItem = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
@@ -13534,18 +13512,6 @@ bool Player::IsUsingTwoHandedWeaponInOneHand() const
         return false;
 
     if (!offItem)
-        return false;
-
-    return true;
-}
-
-bool Player::IsUsingOneHandedWeaponInBothHands() const
-{
-    Item* offItem = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
-    if (!offItem || offItem->GetTemplate()->InventoryType != INVTYPE_WEAPON && offItem->GetTemplate()->InventoryType != INVTYPE_WEAPONOFFHAND)
-        return false;
-    Item* mainItem = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
-    if (!mainItem || mainItem->GetTemplate()->InventoryType != INVTYPE_WEAPON && mainItem->GetTemplate()->InventoryType != INVTYPE_WEAPONMAINHAND)
         return false;
 
     return true;

@@ -37,8 +37,7 @@ enum Yells
     SAY_SLAY                    = 3,
     SAY_DEATH                   = 4,
 
-    EMOTE_GROW                  = 5,
-    EMOTE_HARD_MODE             = 6
+    EMOTE_GROW                  = 5
 };
 
 enum Spells
@@ -86,10 +85,8 @@ class boss_gruul : public CreatureScript
                 m_uiCaveIn_StaticTimer = 30000;
                 m_uiGroundSlamTimer = 35000;
                 m_bPerformingGroundSlam = false;
-                hardmode = false;
-                growthStacks = 0;
                 m_uiHurtfulStrike_Timer = 8000;
-                m_uiReverberation_Timer = 45000;
+                m_uiReverberation_Timer = 60000 + 45000;
             }
 
             uint32 m_uiGrowth_Timer;
@@ -98,10 +95,8 @@ class boss_gruul : public CreatureScript
             uint32 m_uiGroundSlamTimer;
             uint32 m_uiHurtfulStrike_Timer;
             uint32 m_uiReverberation_Timer;
-            uint32 growthStacks;
 
             bool m_bPerformingGroundSlam;
-            bool hardmode;
 
             void Reset() override
             {
@@ -127,18 +122,29 @@ class boss_gruul : public CreatureScript
                 Talk(SAY_DEATH);
             }
 
-            void SpellHitTarget(Unit* target, SpellInfo const* pSpell) override
+            void SpellHitTarget(WorldObject* target, SpellInfo const* spellInfo) override
             {
                 //This to emulate effect1 (77) of SPELL_GROUND_SLAM, knock back to any direction
                 //It's initially wrong, since this will cause fall damage, which is by comments, not intended.
-                if (pSpell->Id == SPELL_GROUND_SLAM)
+                if (spellInfo->Id == SPELL_GROUND_SLAM)
                 {
                     if (target->GetTypeId() == TYPEID_PLAYER)
-                        target->CastSpell(target, SPELL_KNOCK_BACK, me->GetGUID());
+                    {
+                        switch (urand(0, 1))
+                        {
+                            case 0:
+                                target->CastSpell(target, SPELL_MAGNETIC_PULL, me->GetGUID());
+                                break;
+
+                            case 1:
+                                target->CastSpell(target, SPELL_KNOCK_BACK, me->GetGUID());
+                                break;
+                        }
+                    }
                 }
 
                 //this part should be in the core
-                if (pSpell->Id == SPELL_SHATTER)
+                if (spellInfo->Id == SPELL_SHATTER)
                 {
                     /// @todo use eventmap to kill this stuff
                     //clear this, if we are still performing
@@ -174,11 +180,7 @@ class boss_gruul : public CreatureScript
                 {
                     Talk(EMOTE_GROW);
                     DoCast(me, SPELL_GROWTH);
-                    growthStacks++;
-                    if (hardmode)
-                        m_uiGrowth_Timer = 25000;
-                    else
-                        m_uiGrowth_Timer = 30000;
+                    m_uiGrowth_Timer = 30000;
                 }
                 else
                     m_uiGrowth_Timer -= diff;
@@ -187,13 +189,12 @@ class boss_gruul : public CreatureScript
                 {
                     if (m_uiGroundSlamTimer <= diff)
                     {
-                        m_uiGroundSlamTimer = 60000;
-                        m_uiHurtfulStrike_Timer = 8000;
+                        m_uiGroundSlamTimer =120000;
+                        m_uiHurtfulStrike_Timer= 8000;
 
                         if (m_uiReverberation_Timer < 10000)     //Give a little time to the players to undo the damage from shatter
-                            m_uiReverberation_Timer += 6000;
+                            m_uiReverberation_Timer += 10000;
 
-                        Talk(SAY_SHATTER);
                         DoCast(me, SPELL_SHATTER);
                     }
                     else
@@ -204,14 +205,14 @@ class boss_gruul : public CreatureScript
                     // Hurtful Strike
                     if (m_uiHurtfulStrike_Timer <= diff)
                     {
-                        Unit* target = SelectTarget(SELECT_TARGET_MAXTHREAT, 1);
+                        Unit* target = SelectTarget(SelectTargetMethod::MaxThreat, 1);
 
                         if (target && me->IsWithinMeleeRange(me->GetVictim()))
                             DoCast(target, SPELL_HURTFUL_STRIKE);
                         else
                             DoCastVictim(SPELL_HURTFUL_STRIKE);
 
-                        m_uiHurtfulStrike_Timer = 8000;
+                        m_uiHurtfulStrike_Timer= 8000;
                     }
                     else
                         m_uiHurtfulStrike_Timer -= diff;
@@ -228,7 +229,7 @@ class boss_gruul : public CreatureScript
                     // Cave In
                     if (m_uiCaveIn_Timer <= diff)
                     {
-                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
+                        if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0))
                             DoCast(target, SPELL_CAVE_IN);
 
                         if (m_uiCaveIn_StaticTimer >= 4000)
@@ -246,26 +247,14 @@ class boss_gruul : public CreatureScript
                         me->GetMotionMaster()->MoveIdle();
 
                         m_bPerformingGroundSlam= true;
-                        m_uiGroundSlamTimer = 8000;
+                        m_uiGroundSlamTimer = 10000;
 
-                        Talk(SAY_SLAM);
                         DoCast(me, SPELL_GROUND_SLAM);
                     }
                     else
                         m_uiGroundSlamTimer -= diff;
 
                     DoMeleeAttackIfReady();
-                }
-
-                if (!me->HealthBelowPct(90) && growthStacks >= 5 && hardmode == false)
-                {
-                    me->SetFullHealth();
-                    me->AddLootMode(LOOT_MODE_HARD_MODE_1);
-                    Talk(SAY_AGGRO);
-                    Talk(EMOTE_HARD_MODE);
-                    hardmode = true;
-                    growthStacks = 5;
-                    me->SetAuraStack(SPELL_GROWTH, me, 5);
                 }
             }
         };

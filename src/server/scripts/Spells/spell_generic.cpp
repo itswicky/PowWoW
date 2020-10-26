@@ -1287,8 +1287,7 @@ class spell_gen_damage_reduction_aura : public AuraScript
         if (target->HasAura(SPELL_DAMAGE_REDUCTION_AURA) && !(target->HasAura(SPELL_BLESSING_OF_SANCTUARY) ||
             target->HasAura(SPELL_GREATER_BLESSING_OF_SANCTUARY) ||
             target->HasAura(SPELL_RENEWED_HOPE) ||
-            target->HasAura(SPELL_VIGILANCE) ||
-            target->HasAura(81119))) // Will of the Necropolis))
+            target->HasAura(SPELL_VIGILANCE)))
         {
             target->RemoveAurasDueToSpell(SPELL_DAMAGE_REDUCTION_AURA);
         }

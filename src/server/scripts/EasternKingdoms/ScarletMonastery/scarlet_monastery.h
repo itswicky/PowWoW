@@ -47,7 +47,6 @@ enum SMDataTypes
 
     DATA_PUMPKIN_SHRINE,
     DATA_HIGH_INQUISITORS_DOOR,
-    DATA_HERODS_DOOR,
 };
 
 enum SMCreatureIds
@@ -57,15 +56,13 @@ enum SMCreatureIds
     NPC_VORREL = 3981,
     NPC_HORSEMAN = 23682,
     NPC_HEAD = 23775,
-    NPC_PUMPKIN = 23694,
-    NPC_HEROD = 3975
+    NPC_PUMPKIN = 23694
 };
 
 enum SMGameObjectIds
 {
     GO_HIGH_INQUISITORS_DOOR = 104600,
-    GO_PUMPKIN_SHRINE = 186267,
-    GO_HERODS_DOOR = 101854
+    GO_PUMPKIN_SHRINE = 186267
 };
 
 template <class AI, class T>
