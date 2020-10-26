@@ -37,6 +37,16 @@ enum Sounds
     SOUND_DESTROYDOOR                                    = 3079
 };
 
+ObjectData const creatureData[] =
+{
+    { NPC_CAPTAIN_GREENSKIN,    DATA_CAPTAIN_GREENSKIN  },
+    { NPC_POLLY,                DATA_POLLY              },
+    { NPC_VANCLEEF,             DATA_VANCLEEF           },
+    { NPC_SNEED,                DATA_SNEED              },
+    { NPC_SNEEDS_SHREDDER,      DATA_SNEEDS_SHREDDER    },
+    { 0,                        0                       }
+};
+
 enum Misc
 {
     DATA_CANNON_BLAST_TIMER                                = 3000,
@@ -44,26 +54,19 @@ enum Misc
     DATA_SMITE_ALARM_DELAY_TIMER                           = 5000
 };
 
-DoorData const doorData[] =
-{
-    { GO_FACTORY_DOOR,      BOSS_RHAHKZOR,   DOOR_TYPE_PASSAGE },
-    { GO_MAST_ROOM_DOOR,    BOSS_SNEED,      DOOR_TYPE_PASSAGE },
-    { GO_FOUNDRY_DOOR,      BOSS_GILNID,     DOOR_TYPE_PASSAGE },
-    { 0,                    0,               DOOR_TYPE_ROOM    } // END
-};
-
 class instance_deadmines : public InstanceMapScript
 {
     public:
-        instance_deadmines() : InstanceMapScript(DMScriptName, 36) { }
+        instance_deadmines() : InstanceMapScript(DMScriptName, 36)
+        {
+        }
 
         struct instance_deadmines_InstanceMapScript : public InstanceScript
         {
             instance_deadmines_InstanceMapScript(Map* map) : InstanceScript(map)
             {
                 SetHeaders(DataHeader);
-                SetBossNumber(EncounterCount);
-                LoadDoorData(doorData);
+                LoadObjectData(creatureData, nullptr);
 
                 State = CANNON_NOT_USED;
                 CannonBlast_Timer = 0;
@@ -71,11 +74,13 @@ class instance_deadmines : public InstanceMapScript
                 SmiteAlarmDelay_Timer = 0;
             }
 
+            ObjectGuid FactoryDoorGUID;
             ObjectGuid IronCladDoorGUID;
             ObjectGuid DefiasCannonGUID;
             ObjectGuid DoorLeverGUID;
             ObjectGuid DefiasPirate1GUID;
             ObjectGuid DefiasPirate2GUID;
+            ObjectGuid DefiasCompanionGUID;
             ObjectGuid MrSmiteGUID;
 
             uint32 State;
@@ -136,8 +141,8 @@ class instance_deadmines : public InstanceMapScript
             {
                 if (GameObject* pIronCladDoor = instance->GetGameObject(IronCladDoorGUID))
                 {
-                    Creature* DefiasPirate1 = pIronCladDoor->SummonCreature(657, pIronCladDoor->GetPositionX() - 2, pIronCladDoor->GetPositionY()-7, pIronCladDoor->GetPositionZ(), 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 3s);
-                    Creature* DefiasPirate2 = pIronCladDoor->SummonCreature(657, pIronCladDoor->GetPositionX() + 3, pIronCladDoor->GetPositionY()-6, pIronCladDoor->GetPositionZ(), 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 3s);
+                    Creature* DefiasPirate1 = pIronCladDoor->SummonCreature(657, pIronCladDoor->GetPositionX() - 2, pIronCladDoor->GetPositionY()-7, pIronCladDoor->GetPositionZ(), 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 3000);
+                    Creature* DefiasPirate2 = pIronCladDoor->SummonCreature(657, pIronCladDoor->GetPositionX() + 3, pIronCladDoor->GetPositionY()-6, pIronCladDoor->GetPositionZ(), 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 3000);
 
                     DefiasPirate1GUID = DefiasPirate1->GetGUID();
                     DefiasPirate2GUID = DefiasPirate2->GetGUID();
@@ -146,16 +151,18 @@ class instance_deadmines : public InstanceMapScript
 
             void MoveCreaturesInside()
             {
-                if (!DefiasPirate1GUID || !DefiasPirate2GUID)
+                if (!DefiasPirate1GUID || !DefiasPirate2GUID || !DefiasCompanionGUID)
                     return;
 
                 Creature* pDefiasPirate1 = instance->GetCreature(DefiasPirate1GUID);
                 Creature* pDefiasPirate2 = instance->GetCreature(DefiasPirate2GUID);
-                if (!pDefiasPirate1 || !pDefiasPirate2)
+                Creature* pDefiasCompanion = instance->GetCreature(DefiasCompanionGUID);
+                if (!pDefiasPirate1 || !pDefiasPirate2 || !pDefiasCompanion)
                     return;
 
                 MoveCreatureInside(pDefiasPirate1);
                 MoveCreatureInside(pDefiasPirate2);
+                MoveCreatureInside(pDefiasCompanion);
             }
 
             void MoveCreatureInside(Creature* creature)
@@ -190,12 +197,27 @@ class instance_deadmines : public InstanceMapScript
 
             void OnCreatureCreate(Creature* creature) override
             {
-                InstanceScript::OnCreatureCreate(creature);
-
                 switch (creature->GetEntry())
                 {
                     case NPC_MR_SMITE:
                         MrSmiteGUID = creature->GetGUID();
+                        break;
+                    case NPC_CAPTAIN_GREENSKIN:
+                        CaptainGreenskinGUID = creature->GetGUID();
+                        AddMinion(creature, true);
+                        break;
+                    case NPC_POLLY:
+                        PollyGUID = creature->GetGUID();
+                        AddMinion(creature, true);
+                        break;
+                    case NPC_VANCLEEF:
+                        VanCleefGUID = creature->GetGUID();
+                        break;
+                    case NPC_SNEED:
+                        SneedGUID = creature->GetGUID();
+                        break;
+                    case NPC_SNEEDS_SHREDDER:
+                        SneedsShredderGUID = creature->GetGUID();
                         break;
                     default:
                         break;
@@ -204,45 +226,13 @@ class instance_deadmines : public InstanceMapScript
 
             void OnGameObjectCreate(GameObject* go) override
             {
-                InstanceScript::OnGameObjectCreate(go);
-
                 switch (go->GetEntry())
                 {
-                    case GO_IRONCLAD_DOOR:
-                        IronCladDoorGUID = go->GetGUID();
-                        break;
-                    case GO_DEFIAS_CANNON:
-                        DefiasCannonGUID = go->GetGUID();
-                        break;
-                    case GO_DOOR_LEVER:
-                        DoorLeverGUID = go->GetGUID();
-                        break;
-                    case GO_MR_SMITE_CHEST:
-                        uiSmiteChestGUID = go->GetGUID();
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            void OnUnitDeath(Unit* unit) override
-            {
-                if (Creature* creature = unit->ToCreature())
-                {
-                    switch (creature->GetEntry())
-                    {
-                        case NPC_RHAHKZOR:
-                            SetBossState(BOSS_RHAHKZOR, DONE);
-                            break;
-                        case NPC_SNEED:
-                            SetBossState(BOSS_SNEED, DONE);
-                            break;
-                        case NPC_GILNID:
-                            SetBossState(BOSS_GILNID, DONE);
-                            break;
-                        default:
-                            break;
-                    }
+                    case GO_FACTORY_DOOR:   FactoryDoorGUID = go->GetGUID(); break;
+                    case GO_IRONCLAD_DOOR:  IronCladDoorGUID = go->GetGUID();  break;
+                    case GO_DEFIAS_CANNON:  DefiasCannonGUID = go->GetGUID();  break;
+                    case GO_DOOR_LEVER:     DoorLeverGUID = go->GetGUID();     break;
+                    case GO_MR_SMITE_CHEST: uiSmiteChestGUID = go->GetGUID();  break;
                 }
             }
 
@@ -253,6 +243,11 @@ class instance_deadmines : public InstanceMapScript
                     case EVENT_STATE:
                         if (DefiasCannonGUID && IronCladDoorGUID)
                             State = data;
+                        break;
+                    case EVENT_RHAHKZOR:
+                        if (data == DONE)
+                            if (GameObject* go = instance->GetGameObject(FactoryDoorGUID))
+                                go->SetGoState(GO_STATE_ACTIVE);
                         break;
                 }
             }
@@ -274,10 +269,29 @@ class instance_deadmines : public InstanceMapScript
                 {
                     case DATA_SMITE_CHEST:
                         return uiSmiteChestGUID;
+                    case DATA_CAPTAIN_GREENSKIN:
+                        return CaptainGreenskinGUID;
+                    case DATA_POLLY:
+                        return PollyGUID;
+                    case DATA_VANCLEEF:
+                        return VanCleefGUID;
+                    case DATA_SNEED:
+                        return SneedGUID;
+                    case DATA_SNEEDS_SHREDDER:
+                        return SneedsShredderGUID;
+                    default:
+                        break;
                 }
 
                 return ObjectGuid::Empty;
             }
+
+            protected:
+                ObjectGuid CaptainGreenskinGUID;
+                ObjectGuid PollyGUID;
+                ObjectGuid VanCleefGUID;
+                ObjectGuid SneedGUID;
+                ObjectGuid SneedsShredderGUID;
         };
 
         InstanceScript* GetInstanceScript(InstanceMap* map) const override

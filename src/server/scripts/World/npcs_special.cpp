@@ -2668,6 +2668,93 @@ public:
     }
 };
 
+class npc_training_dummy_execute : public CreatureScript
+{
+public:
+    npc_training_dummy_execute() : CreatureScript("npc_training_dummy_execute") { }
+
+    struct npc_training_dummy_executeAI : PassiveAI
+    {
+        npc_training_dummy_executeAI(Creature* creature) : PassiveAI(creature), _combatCheckTimer(500)
+        {
+            uint32 const entry = me->GetEntry();
+            if (entry == NPC_TARGET_DUMMY || entry == NPC_ADVANCED_TARGET_DUMMY)
+            {
+                _combatCheckTimer = 0;
+                me->DespawnOrUnsummon(16s);
+            }
+        }
+
+        void InitializeAI() override
+        {
+            me->SetHealth(me->GetMaxHealth() * 0.2f);
+        }
+
+        void Reset() override
+        {
+            _damageTimes.clear();
+        }
+
+        void EnterEvadeMode(EvadeReason why) override
+        {
+            if (!_EnterEvadeMode(why))
+                return;
+
+            Reset();
+        }
+
+        void DamageTaken(Unit* doneBy, uint32& damage) override
+        {
+            if (doneBy)
+                _damageTimes[doneBy->GetGUID()] = GameTime::GetGameTime();
+            damage = 0;
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            if (!_combatCheckTimer || !me->IsInCombat())
+                return;
+
+            if (diff < _combatCheckTimer)
+            {
+                _combatCheckTimer -= diff;
+                return;
+            }
+
+            _combatCheckTimer = 500;
+
+            time_t const now = GameTime::GetGameTime();
+            auto const& pveRefs = me->GetCombatManager().GetPvECombatRefs();
+            for (auto itr = _damageTimes.begin(); itr != _damageTimes.end();)
+            {
+                // If unit has not dealt damage to training dummy for 5 seconds, remove him from combat
+                if (itr->second < now - 5)
+                {
+                    auto it = pveRefs.find(itr->first);
+                    if (it != pveRefs.end())
+                        it->second->EndCombat();
+
+                    itr = _damageTimes.erase(itr);
+                }
+                else
+                    ++itr;
+            }
+
+            for (auto const& pair : pveRefs)
+                if (_damageTimes.find(pair.first) == _damageTimes.end())
+                    _damageTimes[pair.first] = now;
+        }
+
+        std::unordered_map<ObjectGuid, time_t> _damageTimes;
+        uint32 _combatCheckTimer;
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_training_dummy_executeAI(creature);
+    }
+};
+
 void AddSC_npcs_special()
 {
     new npc_air_force_bots();
@@ -2694,4 +2781,5 @@ void AddSC_npcs_special()
     new npc_train_wrecker();
     new npc_argent_squire_gruntling();
     new npc_bountiful_table();
+    new npc_training_dummy_execute();
 }

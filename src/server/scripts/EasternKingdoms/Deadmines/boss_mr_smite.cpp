@@ -31,9 +31,16 @@ EndScriptData */
 
 enum Spells
 {
-    SPELL_TRASH             = 3391,
-    SPELL_SMITE_STOMP       = 6432,
-    SPELL_SMITE_SLAM        = 6435
+    SPELL_THRASH                = 3391,
+    SPELL_SMITE_STOMP           = 6432,
+    SPELL_SMITE_SLAM            = 6435,
+    SPELL_NIMBLE_REFLEXES       = 6264,
+    SPELL_CANNON_STRIKE_SUMMON  = 81160,
+    SPELL_CANNON_STRIKE_AURA    = 81158,
+    SPELL_BLUNDERBUSS_SHOT      = 81156,
+    SPELL_GROUND_SLAM           = 81157,
+    SPELL_DUAL_WIELDING         = 81161,
+    SPELL_SMITES_MIGHTY_HAMMER  = 81162
 };
 
 enum Equips
@@ -46,7 +53,11 @@ enum Equips
 enum Texts
 {
     SAY_PHASE_1             = 2,
-    SAY_PHASE_2             = 3
+    SAY_PHASE_2             = 3,
+    SAY_AGGRO               = 4,
+    SAY_CANNON_STRIKE       = 5,
+    SAY_SLAY                = 6,
+    SAY_DEATH               = 7
 };
 
 class boss_mr_smite : public CreatureScript
@@ -69,8 +80,12 @@ public:
 
         void Initialize()
         {
-            uiTrashTimer = urand(5000, 9000);
-            uiSlamTimer = 9000;
+            uiThrashTimer = urand(5000, 9000);
+            uiSlamTimer = 7000;
+            uiNimbleReflexesTimer = urand(15500, 19600);
+            uiCannonStrikeTimer = urand(9000, 14500);
+            uiBlunderbussShotTimer = urand(5000, 7500);
+            uiGroundSlamTimer = urand(6200, 8200);
 
             uiHealth = 0;
 
@@ -82,8 +97,12 @@ public:
 
         InstanceScript* instance;
 
-        uint32 uiTrashTimer;
+        uint32 uiThrashTimer;
         uint32 uiSlamTimer;
+        uint32 uiNimbleReflexesTimer;
+        uint32 uiCannonStrikeTimer;
+        uint32 uiBlunderbussShotTimer;
+        uint32 uiGroundSlamTimer;
 
         uint8 uiHealth;
 
@@ -99,20 +118,14 @@ public:
             SetEquipmentSlots(false, EQUIP_SWORD, EQUIP_UNEQUIP, EQUIP_NO_CHANGE);
             me->SetStandState(UNIT_STAND_STATE_STAND);
             me->SetReactState(REACT_AGGRESSIVE);
-            me->SetNoCallAssistance(true);
+            me->RemoveAura(SPELL_DUAL_WIELDING);
+            me->RemoveAura(SPELL_SMITES_MIGHTY_HAMMER);
         }
 
         void JustEngagedWith(Unit* /*who*/) override
         {
-        }
-
-        bool bCheckChances()
-        {
-            uint32 uiChances = urand(0, 99);
-            if (uiChances <= 15)
-                return false;
-            else
-                return true;
+            Talk(SAY_AGGRO);
+            uiPhase = 5;
         }
 
         void UpdateAI(uint32 uiDiff) override
@@ -122,22 +135,65 @@ public:
 
             if (!uiIsMoving) // halt abilities in between phases
             {
-                if (uiTrashTimer <= uiDiff)
+                if (uiThrashTimer <= uiDiff)
                 {
-                    if (bCheckChances())
-                        DoCast(me, SPELL_TRASH);
-                    uiTrashTimer = urand(6000, 15500);
+                    if (uiPhase == 6)
+                    {
+                        DoCast(me, SPELL_THRASH);
+                        uiThrashTimer = urand(6000, 9000);
+                    }
                 }
-                else uiTrashTimer -= uiDiff;
+                else uiThrashTimer -= uiDiff;
 
                 if (uiSlamTimer <= uiDiff)
                 {
-                    if (bCheckChances())
-                        DoCastVictim(SPELL_SMITE_SLAM);
+                    DoCastVictim(SPELL_SMITE_SLAM);
                     uiSlamTimer = 11000;
                 }
                 else uiSlamTimer -= uiDiff;
 
+                if (uiNimbleReflexesTimer <= uiDiff)
+                {
+                    DoCast(me, SPELL_NIMBLE_REFLEXES);
+                    uiNimbleReflexesTimer = urand(20000, 24000);
+                }
+                else uiNimbleReflexesTimer -= uiDiff;
+
+                if (uiCannonStrikeTimer <= uiDiff)
+                {
+                    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 40.0f, true))
+                    {
+                        DoCast(target, SPELL_CANNON_STRIKE_SUMMON);
+                        Talk(SAY_CANNON_STRIKE);
+
+                        if (Creature* trigger = me->FindNearestCreature(50012, 100.0f, true))
+                            DoCast(trigger, SPELL_CANNON_STRIKE_AURA);
+
+                        uiCannonStrikeTimer = urand(12000, 18000);
+                    }                         
+                }
+                else uiCannonStrikeTimer -= uiDiff;
+
+                if (uiBlunderbussShotTimer <= uiDiff)
+                {
+                    if (uiPhase == 5)
+                    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 30.0f, true, false))
+                    {
+                        DoCast(target, SPELL_BLUNDERBUSS_SHOT);
+                        uiBlunderbussShotTimer = urand(9000, 110000);
+                    }
+                }
+                else uiBlunderbussShotTimer -= uiDiff;
+
+                if (uiGroundSlamTimer <= uiDiff)
+                {
+                    if (uiPhase == 7)
+                    {
+                        DoCast(me, SPELL_GROUND_SLAM);
+                        uiGroundSlamTimer = urand(16000, 18000);
+                    }
+                }
+                else uiGroundSlamTimer -= uiDiff;
             }
 
             if ((uiHealth == 0 && !HealthAbovePct(66)) || (uiHealth == 1 && !HealthAbovePct(33)))
@@ -183,9 +239,16 @@ public:
                         }
                         case 2:
                             if (uiHealth == 1)
+                            {
                                 SetEquipmentSlots(false, EQUIP_AXE, EQUIP_AXE, EQUIP_NO_CHANGE);
+                                me->AddAura(SPELL_DUAL_WIELDING, me);
+                            }
                             else
+                            {
                                 SetEquipmentSlots(false, EQUIP_MACE, EQUIP_UNEQUIP, EQUIP_NO_CHANGE);
+                                me->RemoveAura(SPELL_DUAL_WIELDING);
+                                me->AddAura(SPELL_SMITES_MIGHTY_HAMMER, me);
+                            }
                             uiTimer = 500;
                             uiPhase = 3;
                             break;
@@ -199,7 +262,13 @@ public:
                             SetCombatMovement(true);
                             me->GetMotionMaster()->MoveChase(me->GetVictim(), me->m_CombatDistance);
                             uiIsMoving = false;
-                            uiPhase = 0;
+                            if (uiHealth == 1)
+                                uiPhase = 6;
+                            else
+                            {
+                                uiPhase = 7;
+                                uiGroundSlamTimer = 3500;
+                            }
                             break;
                     }
                 } else uiTimer -= uiDiff;
@@ -218,6 +287,17 @@ public:
 
             uiTimer = 2000;
             uiPhase = 2;
+        }
+
+        void JustDied(Unit* /*killer*/) override
+        {
+            Talk(SAY_DEATH);
+        }
+
+        void KilledUnit(Unit* victim) override
+        {
+            if (victim->GetTypeId() == TYPEID_PLAYER)
+                Talk(SAY_SLAY);
         }
     };
 };
