@@ -92,7 +92,7 @@ public:
 
             if (uiAcidSplashTimer <= uiDiff)
             {
-                if (Unit* target = SelectTarget(SELECT_TARGET_MAXDISTANCE, 0, 30.0f, true))
+                if (Unit* target = SelectTarget(SelectTargetMethod::MaxDistance, 0, 30.0f, true))
                 {
                     DoCast(target, SPELL_ACID_SPLASH);
                     if (uiPhase == 1)
@@ -117,7 +117,7 @@ public:
 
             if (uiTryThisTimer <= uiDiff)
             {
-                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 30.0f, true))
+                if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0, 30.0f, true))
                 {
                     Talk(SAY_TRY_THIS);
                     DoCast(target, SPELL_TRY_THIS);

@@ -118,7 +118,7 @@ struct boss_vancleef : public BossAI
         void SummonBlackguards()
         {
             for (Position BlackguardPosition : BlackguardPositions)
-                DoSummon(NPC_BLACKGUARD, BlackguardPosition, 60000, TEMPSUMMON_CORPSE_TIMED_DESPAWN);
+                DoSummon(NPC_BLACKGUARD, BlackguardPosition, 1min, TEMPSUMMON_CORPSE_TIMED_DESPAWN);
         }
 
         void DamageTaken(Unit* /*attacker*/, uint32& /*damage*/) override
@@ -173,7 +173,7 @@ struct boss_vancleef : public BossAI
             {
                 if (Shadowstep_Timer <= diff)
                 {
-                    if (Unit* target = SelectTarget(SELECT_TARGET_MAXDISTANCE, 0, 60.0f, true, false))
+                    if (Unit* target = SelectTarget(SelectTargetMethod::MaxDistance, 0, 60.0f, true, false))
                     {
                         DoStopAttack();
                         DoCast(target, SPELL_SHADOWSTEP);
@@ -195,7 +195,7 @@ struct boss_vancleef : public BossAI
 
                 if (Blind_Timer <= diff)
                 {
-                    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 20.0f, true, false))
+                    if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0, 20.0f, true, false))
                         DoCast(target, SPELL_BLIND);
                     Blind_Timer = 24000;
                 }
@@ -214,7 +214,7 @@ struct boss_vancleef : public BossAI
             {
                 if (Wait_Timer <= diff)
                 {
-                    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 40.0f, true, false))
+                    if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0, 40.0f, true, false))
                     {
                         DoCast(target, SPELL_SHADOWSTEP);
 

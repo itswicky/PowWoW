@@ -161,7 +161,7 @@ public:
 
                 if (uiCannonStrikeTimer <= uiDiff)
                 {
-                    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 40.0f, true))
+                    if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0, 40.0f, true))
                     {
                         DoCast(target, SPELL_CANNON_STRIKE_SUMMON);
                         Talk(SAY_CANNON_STRIKE);
@@ -177,7 +177,7 @@ public:
                 if (uiBlunderbussShotTimer <= uiDiff)
                 {
                     if (uiPhase == 5)
-                    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 30.0f, true, false))
+                    if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0, 30.0f, true, false))
                     {
                         DoCast(target, SPELL_BLUNDERBUSS_SHOT);
                         uiBlunderbussShotTimer = urand(9000, 110000);

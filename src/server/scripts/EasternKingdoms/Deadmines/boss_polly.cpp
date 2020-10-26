@@ -136,7 +136,7 @@ public:
                     break;
 
                 case EVENT_DIVE:
-                    if (Unit* target = SelectTarget(SELECT_TARGET_MAXDISTANCE, 0, 40.0f, true))
+                    if (Unit* target = SelectTarget(SelectTargetMethod::MaxDistance, 0, 40.0f, true))
                         DoCast(target, SPELL_DIVE);
                     events.ScheduleEvent(EVENT_DIVE, 12s);
                     break;

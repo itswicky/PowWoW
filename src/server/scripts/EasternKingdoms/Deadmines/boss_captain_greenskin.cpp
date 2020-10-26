@@ -140,17 +140,17 @@ class boss_captain_greenskin : public CreatureScript
                 switch (eventId)
                 {
                     case EVENT_POISONED_HARPOON:
-                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 40.0f, true))
+                        if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0, 40.0f, true))
                             DoCast(target, SPELL_POISONED_HARPOON);
                         events.ScheduleEvent(EVENT_POISONED_HARPOON, 15s);
                         break;
                     case EVENT_CALL_REINFORCEMENTS:
                         if (roll < 33)
-                            DoSummon(NPC_DEFIAS_PRIATE, ReinforcementsPosition, 60000, TEMPSUMMON_CORPSE_TIMED_DESPAWN);
+                            DoSummon(NPC_DEFIAS_PRIATE, ReinforcementsPosition, 1min, TEMPSUMMON_CORPSE_TIMED_DESPAWN);
                         else if (roll < 66)
-                            DoSummon(NPC_DEFIAS_SQUALLSHAPER, ReinforcementsPosition, 60000, TEMPSUMMON_CORPSE_TIMED_DESPAWN);
+                            DoSummon(NPC_DEFIAS_SQUALLSHAPER, ReinforcementsPosition, 1min, TEMPSUMMON_CORPSE_TIMED_DESPAWN);
                         else
-                            DoSummon(NPC_GOLBIN_SHIPBUILDER, ReinforcementsPosition, 60000, TEMPSUMMON_CORPSE_TIMED_DESPAWN);
+                            DoSummon(NPC_GOLBIN_SHIPBUILDER, ReinforcementsPosition, 1min, TEMPSUMMON_CORPSE_TIMED_DESPAWN);
                         Talk(SAY_SUMMON);
                         events.ScheduleEvent(EVENT_CALL_REINFORCEMENTS, 45s);
                         break;
@@ -159,7 +159,7 @@ class boss_captain_greenskin : public CreatureScript
                         events.ScheduleEvent(EVENT_CLEAVE, 8s);
                         break;
                     case EVENT_BOOT:
-                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 5.0f, true))
+                        if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0, 5.0f, true))
                             DoCast(target, SPELL_BOOT);
                         events.ScheduleEvent(EVENT_BOOT, 12s);
                         break;

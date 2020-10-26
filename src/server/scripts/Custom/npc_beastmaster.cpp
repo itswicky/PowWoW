@@ -37,7 +37,7 @@ public:
             return;
         }
 
-        Creature *creatureTarget = m_creature->SummonCreature(entry, player->GetPositionX(), player->GetPositionY() + 2, player->GetPositionZ(), player->GetOrientation(), TEMPSUMMON_CORPSE_TIMED_DESPAWN, 500);
+        Creature *creatureTarget = m_creature->SummonCreature(entry, player->GetPositionX(), player->GetPositionY() + 2, player->GetPositionZ(), player->GetOrientation(), TEMPSUMMON_CORPSE_TIMED_DESPAWN, 500ms);
         if (!creatureTarget) return;
 
         Pet* pet = player->CreateTamedPetFrom(creatureTarget, 0);
@@ -80,7 +80,7 @@ public:
     }
 
 
-    static bool OnGossipHello(Player *player, Creature * m_creature)
+    static bool OnGossipHelloHere(Player *player, Creature * m_creature)
     {
 
         if (player->GetClass() != CLASS_HUNTER)
@@ -101,7 +101,7 @@ public:
         return true;
     }
 
-    static bool OnGossipSelect(Player *player, Creature * m_creature, uint32 sender, uint32 action)
+    static bool OnGossipSelectHere(Player *player, Creature * m_creature, uint32 sender, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         switch (action)
@@ -278,7 +278,7 @@ public:
         }
         return true;
     }
-    static bool OnGossipSelectCode(Player* player, Creature* m_creature, uint32 sender, uint32 action, char const* code)
+    static bool OnGossipSelectCodeHere(Player* player, Creature* m_creature, uint32 sender, uint32 action, char const* code)
     {
         player->PlayerTalkClass->ClearMenus();
         // code
@@ -287,21 +287,21 @@ public:
     struct MyAI : public ScriptedAI
     {
         MyAI(Creature* m_creature) : ScriptedAI(m_creature) { }
-        bool GossipHello(Player* player) override
+        bool GossipHello(Player* player)
         {
-            return OnGossipHello(player, me);
+            return OnGossipHelloHere(player, me);
         }
-        bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
+        bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
         {
             uint32 sender = player->PlayerTalkClass->GetGossipOptionSender(gossipListId);
             uint32 action = player->PlayerTalkClass->GetGossipOptionAction(gossipListId);
-            return OnGossipSelect(player, me, sender, action);
+            return OnGossipSelectHere(player, me, sender, action);
         }
-        bool GossipSelectCode(Player* player, uint32 menuId, uint32 gossipListId, char const* code) override
+        bool GossipSelectCode(Player* player, uint32 menuId, uint32 gossipListId, char const* code)
         {
             uint32 sender = player->PlayerTalkClass->GetGossipOptionSender(gossipListId);
             uint32 action = player->PlayerTalkClass->GetGossipOptionAction(gossipListId);
-            return OnGossipSelectCode(player, me, sender, action, code);
+            return OnGossipSelectCodeHere(player, me, sender, action, code);
         }
     };
     CreatureAI* GetAI(Creature* m_creature) const override

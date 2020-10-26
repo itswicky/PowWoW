@@ -99,17 +99,17 @@ public:
                 switch (eventId)
                 {
                     case EVENT_DISTRACTING_PAIN:
-                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 40.0f, true, false))
+                        if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0, 40.0f, true, false))
                             DoCast(target, SPELL_DISTRACTING_PAIN);
                         events.Repeat(10s);
                         break;
                     case EVENT_TERRIFY:
-                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 10.0f, true))
+                        if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0, 10.0f, true))
                             DoCast(target, SPELL_TERRIFY);
                         events.Repeat(12s);
                         break;
                     case EVENT_SAWBLADE:
-                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 40.0f, true, false))
+                        if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0, 40.0f, true, false))
                             DoCast(target, SPELL_SAWBLADE);
                         events.Repeat(8s);
                         break;
@@ -186,7 +186,7 @@ public:
         {
             if (summon->GetEntry() == NPC_SNEEDS_SHREDDER)
             {
-                summon->AI()->AttackStart(SelectTarget(SELECT_TARGET_RANDOM));
+                summon->AI()->AttackStart(SelectTarget(SelectTargetMethod::Random));
                 DoZoneInCombat(summon);
                 me->DespawnOrUnsummon();
             }
@@ -220,7 +220,7 @@ public:
                     events.Repeat(15s);
                     break;
                 case EVENT_AXE_TOSS:
-                    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 20.0f, true))
+                    if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0, 20.0f, true))
                         DoCast(target, SPELL_AXE_TOSS);
                     events.Repeat(10s);
                     break;

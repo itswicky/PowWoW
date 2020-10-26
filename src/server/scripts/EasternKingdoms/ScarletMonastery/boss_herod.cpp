@@ -118,7 +118,7 @@ struct boss_herod : public BossAI
         {
             Position randomNearPosition = me->GetRandomPoint(ScarletTraineePos, 5.f);
             randomNearPosition.SetOrientation(ScarletTraineePos.GetOrientation());
-            me->SummonCreature(NPC_SCARLET_TRAINEE, randomNearPosition, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 600 * IN_MILLISECONDS);
+            me->SummonCreature(NPC_SCARLET_TRAINEE, randomNearPosition, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 10min);
         }
 
         instance->SetBossState(DATA_HEROD, DONE);
@@ -170,7 +170,7 @@ struct boss_herod : public BossAI
                     DoCastSelf(SPELL_WHIRLWIND);
                     break;
                 case EVENT_SUMMON_RAVAGER:
-                    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 40.0f, true, false))
+                    if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0, 40.0f, true, false))
                     {
                         Talk(SAY_RAVAGER);
                         DoCast(target, SPELL_SUMMON_RAVAGER);
@@ -179,7 +179,7 @@ struct boss_herod : public BossAI
                     break;
                 case EVENT_HEROIC_LEAP:
                     if (berserker_stance)
-                        if (Unit* target = SelectTarget(SELECT_TARGET_MAXDISTANCE, 0, 40.0f, true, false))
+                        if (Unit* target = SelectTarget(SelectTargetMethod::MaxDistance, 0, 40.0f, true, false))
                         {
                             Talk(SAY_LEAP);
                             DoCast(target, SPELL_HEROIC_LEAP);
