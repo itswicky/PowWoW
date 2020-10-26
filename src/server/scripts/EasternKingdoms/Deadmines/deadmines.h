@@ -23,8 +23,6 @@
 #define DMScriptName "instance_deadmines"
 #define DataHeader "DM"
 
-uint32 constexpr EncounterCount = 7;
-
 enum DMCannonState
 {
     CANNON_NOT_USED,
@@ -37,17 +35,15 @@ enum DMCannonState
 
 enum DMData
 {
-    // Encounters
-    BOSS_RHAHKZOR   = 0,
-    BOSS_SNEED      = 1,
-    BOSS_GILNID     = 2,
-    BOSS_MR_SMITE   = 3,
-    BOSS_GREENSKIN  = 4,
-    BOSS_VANCLEEF   = 5,
-    BOSS_COOKIE     = 6,
+    EVENT_STATE,
+    EVENT_RHAHKZOR,
 
-    // Additional
-    EVENT_STATE     = 7
+    DATA_MR_SMITE = 0,  // not currently used
+    DATA_VANCLEEF = 1,
+    DATA_CAPTAIN_GREENSKIN  = 2,
+    DATA_POLLY  = 3,
+    DATA_SNEED  = 4,
+    DATA_SNEEDS_SHREDDER = 5,
 };
 
 enum DMData64
@@ -55,11 +51,9 @@ enum DMData64
     DATA_SMITE_CHEST
 };
 
-enum DMGameObjectsIds
+enum DMGameObjects
 {
     GO_FACTORY_DOOR                                        = 13965,
-    GO_MAST_ROOM_DOOR                                      = 16400,
-    GO_FOUNDRY_DOOR                                        = 16399,
     GO_IRONCLAD_DOOR                                       = 16397,
     GO_DEFIAS_CANNON                                       = 16398,
     GO_DOOR_LEVER                                          = 101833,
@@ -68,14 +62,16 @@ enum DMGameObjectsIds
 
 enum DMCreaturesIds
 {
-    NPC_RHAHKZOR   = 644,
-    NPC_SNEED      = 643,
-    NPC_GILNID     = 1763,
-    NPC_MR_SMITE   = 646,
-    NPC_GREENSKIN  = 647,
-    NPC_VANCLEEF   = 639,
-    NPC_COOKIE     = 645,
-    NPC_BLACKGUARD = 636
+    NPC_MR_SMITE            = 646,
+    NPC_BLACKGUARD          = 636,
+    NPC_DEFIAS_PRIATE       = 657,
+    NPC_DEFIAS_SQUALLSHAPER = 1732,
+    NPC_GOLBIN_SHIPBUILDER  = 3947,
+    NPC_CAPTAIN_GREENSKIN   = 647,
+    NPC_POLLY               = 50013,
+    NPC_VANCLEEF            = 639,
+    NPC_SNEED               = 643,
+    NPC_SNEEDS_SHREDDER     = 642
 };
 
 enum DMInstanceTexts

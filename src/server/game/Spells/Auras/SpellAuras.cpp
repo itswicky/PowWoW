@@ -1761,8 +1761,8 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
     switch (GetSpellInfo()->SpellFamilyName)
     {
         case SPELLFAMILY_ROGUE:
-            // Stealth
-            if (GetSpellInfo()->SpellFamilyFlags[0] & 0x00400000)
+            // Stealth or Shadow Dance
+            if (GetSpellInfo()->SpellFamilyFlags[0] & 0x00400000 || GetSpellInfo()->SpellFamilyFlags[1] & 0x02000000)
             {
                 // Master of subtlety
                 if (AuraEffect const* aurEff = target->GetAuraEffectOfRankedSpell(31221, 0))

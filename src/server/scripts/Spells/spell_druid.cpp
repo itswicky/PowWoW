@@ -111,6 +111,19 @@ class spell_dru_barkskin : public AuraScript
         return ValidateSpellInfo({ SPELL_DRUID_BARKSKIN_01 });
     }
 
+    void HandleEffectApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+    {
+        Unit * caster = GetCaster();
+        uint32 durationBase = aurEff->GetBase()->GetMaxDuration();
+        uint32 durationMax = aurEff->GetSpellInfo()->GetMaxDuration();
+        
+            if (Aura* petrifiedDragonEye = caster->GetAura(81252))
+            {
+                aurEff->GetBase()->SetDuration(aurEff->GetBase()->GetDuration() + 4000);
+                aurEff->GetBase()->SetMaxDuration(durationBase + 4000);
+            }
+    }
+
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         GetTarget()->RemoveAurasDueToSpell(SPELL_DRUID_BARKSKIN_01);
@@ -118,6 +131,7 @@ class spell_dru_barkskin : public AuraScript
 
     void Register() override
     {
+        AfterEffectApply += AuraEffectApplyFn(spell_dru_barkskin::HandleEffectApply, EFFECT_1, SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN, AURA_EFFECT_HANDLE_REAL);
         AfterEffectRemove += AuraEffectRemoveFn(spell_dru_barkskin::OnRemove, EFFECT_1, SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN, AURA_EFFECT_HANDLE_REAL);
     }
 };

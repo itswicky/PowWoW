@@ -941,6 +941,11 @@ class spell_mage_hot_streak : public SpellScriptLoader
                 if (eventInfo.GetHitMask() & PROC_HIT_CRITICAL)
                 {
                     counter->SetAmount(counter->GetAmount() * 2);
+
+                    if (GetCaster()->HasAura(81003))
+                        if (roll_chance_i(12))
+                            counter->SetAmount(counter->GetAmount() * 2);
+
                     if (counter->GetAmount() < 100) // not enough
                         return;
 
