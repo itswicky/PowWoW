@@ -25350,6 +25350,10 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
     if (spentPoints > (talentInfo->TierID))
         return;
 
+    // custom check for TierID 0
+    if (spentPoints > 0 && (talentInfo->TierID) == 0)
+        return;
+
     // spell not set in talent.dbc
     uint32 spellid = talentInfo->SpellRank[talentRank];
     if (spellid == 0)
