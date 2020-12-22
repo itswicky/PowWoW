@@ -25340,7 +25340,7 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
                     for (uint8 rank = 0; rank < MAX_TALENT_RANK; rank++)
                         if (tmpTalent->SpellRank[rank] != 0)
                             if (HasSpell(tmpTalent->SpellRank[rank]))
-                                spentPoints += (rank + 1);
+                                spentPoints += ((rank + 1) * 5);
 
     // not have required min points spent in talent tree
     if (spentPoints < (talentInfo->TierID)) //* MAX_TALENT_RANK))
