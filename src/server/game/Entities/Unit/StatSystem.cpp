@@ -527,6 +527,12 @@ void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, bo
             minDamage = GetWeaponDamageRange(attType, MINDAMAGE, damageIndex);
             maxDamage = GetWeaponDamageRange(attType, MAXDAMAGE, damageIndex);
         }
+
+        if (HasAura(81258)) //Seal of Shadows
+        {
+            minDamage *= 0.8f;
+            maxDamage *= 0.8f;
+        }
         return;
     }
 

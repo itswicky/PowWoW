@@ -7685,6 +7685,9 @@ SpellSchoolMask Player::GetMeleeDamageSchoolMask(WeaponAttackType attackType /*=
     if (Item const* weapon = GetWeaponForAttack(attackType, true))
         return SpellSchoolMask(1 << weapon->GetTemplate()->Damage[damageIndex].DamageType);
 
+    if (HasAura(81258)) //Seal of Shadows
+        return SPELL_SCHOOL_MASK_SHADOW;
+
     return SPELL_SCHOOL_MASK_NORMAL;
 }
 
