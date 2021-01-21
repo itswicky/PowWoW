@@ -31,7 +31,9 @@ enum Spells
     DUMMY_FINISHER          = 81152,
     GRONNS_POWER            = 81254,
     GRONNS_FURY             = 81255,
-    SEAL_OF_SHADOWS         = 81259
+    SEAL_OF_SHADOWS         = 81258,
+    SEAL_OF_SHADOWS_HEAL    = 81259,
+    SEAL_OF_SHADOWS_DEBUFF  = 81260,
 };
 
 class spell_custom_fixate : public SpellScriptLoader
@@ -447,12 +449,34 @@ public:
 
             CastSpellExtraArgs args(aurEff);
             args.AddSpellBP0(amount);
-            caster->CastSpell(target, SEAL_OF_SHADOWS, args);
+            caster->CastSpell(target, SEAL_OF_SHADOWS_HEAL, args);
+        }
+
+        void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+        {
+            Unit* caster = GetCaster();
+
+            if (!caster)
+                return;
+
+            caster->CastSpell(caster, SEAL_OF_SHADOWS_DEBUFF, true);
+        }
+
+        void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+        {
+            Unit* caster = GetCaster();
+
+            if (!caster)
+                return;
+
+            caster->RemoveAurasDueToSpell(SEAL_OF_SHADOWS_DEBUFF);
         }
 
         void Register() override
         {
             OnEffectProc += AuraEffectProcFn(spell_custom_seal_of_shadows_AuraScript::HandleProc, EFFECT_1, SPELL_AURA_PROC_TRIGGER_SPELL);
+            OnEffectApply += AuraEffectApplyFn(spell_custom_seal_of_shadows_AuraScript::HandleApply, EFFECT_1, SPELL_AURA_PROC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+            OnEffectRemove += AuraEffectRemoveFn(spell_custom_seal_of_shadows_AuraScript::HandleRemove, EFFECT_1, SPELL_AURA_PROC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
         }
     };
 
