@@ -30,7 +30,8 @@ enum Spells
     DISCHARGE               = 81130,
     DUMMY_FINISHER          = 81152,
     GRONNS_POWER            = 81254,
-    GRONNS_FURY             = 81255
+    GRONNS_FURY             = 81255,
+    SEAL_OF_SHADOWS         = 81259
 };
 
 class spell_custom_fixate : public SpellScriptLoader
@@ -416,6 +417,49 @@ public:
     }
 };
 
+class spell_custom_seal_of_shadows : public SpellScriptLoader
+{
+public:
+    spell_custom_seal_of_shadows() : SpellScriptLoader("spell_custom_seal_of_shadows") { }
+
+    class spell_custom_seal_of_shadows_AuraScript : public AuraScript
+    {
+        PrepareAuraScript(spell_custom_seal_of_shadows_AuraScript);
+
+        bool Validate(SpellInfo const* /*spellInfo*/) override
+        {
+            return ValidateSpellInfo({ SEAL_OF_SHADOWS });
+        }
+
+        void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+        {
+            PreventDefaultAction();
+            Unit* caster = eventInfo.GetActor();
+            Unit* target = eventInfo.GetProcTarget();
+
+            DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+            if (!damageInfo || !damageInfo->GetDamage() || !damageInfo->GetVictim())
+                return;
+
+            int32 amount = CalculatePct(static_cast<int32>(damageInfo->GetDamage()), 5);
+
+            CastSpellExtraArgs args(aurEff);
+            args.AddSpellBP0(amount);
+            caster->CastSpell(target, SEAL_OF_SHADOWS, args);
+        }
+
+        void Register() override
+        {
+            OnEffectProc += AuraEffectProcFn(spell_custom_seal_of_shadows_AuraScript::HandleProc, EFFECT_1, SPELL_AURA_PROC_TRIGGER_SPELL);
+        }
+    };
+
+    AuraScript* GetAuraScript() const override
+    {
+        return new spell_custom_seal_of_shadows_AuraScript();
+    }
+};
+
 void AddSC_custom_spell_scripts()
 {
     new spell_custom_fixate();
@@ -426,4 +470,5 @@ void AddSC_custom_spell_scripts()
     new spell_custom_discharge();
     new spell_custom_dummy_finisher();
     new spell_custom_dragonslayers_skull();
+    new spell_custom_seal_of_shadows();
 }
