@@ -441,7 +441,9 @@ public:
             if (!damageInfo || !damageInfo->GetDamage() || !damageInfo->GetVictim())
                 return;
 
-            int32 amount = CalculatePct(static_cast<int32>(damageInfo->GetDamage()), 5);
+            int32 const healPct = aurEff->GetAmount();
+
+            int32 amount = CalculatePct(static_cast<int32>(damageInfo->GetDamage()), healPct);
 
             CastSpellExtraArgs args(aurEff);
             args.AddSpellBP0(amount);
