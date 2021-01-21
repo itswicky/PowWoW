@@ -7682,11 +7682,11 @@ void Player::_ApplyWeaponDamage(uint8 slot, ItemTemplate const* proto, bool appl
 
 SpellSchoolMask Player::GetMeleeDamageSchoolMask(WeaponAttackType attackType /*= BASE_ATTACK*/, uint8 damageIndex /*= 0*/) const
 {
-    if (Item const* weapon = GetWeaponForAttack(attackType, true))
-        return SpellSchoolMask(1 << weapon->GetTemplate()->Damage[damageIndex].DamageType);
-
     if (HasAura(81258)) //Seal of Shadows
         return SPELL_SCHOOL_MASK_SHADOW;
+
+    if (Item const* weapon = GetWeaponForAttack(attackType, true))
+        return SpellSchoolMask(1 << weapon->GetTemplate()->Damage[damageIndex].DamageType);
 
     return SPELL_SCHOOL_MASK_NORMAL;
 }
