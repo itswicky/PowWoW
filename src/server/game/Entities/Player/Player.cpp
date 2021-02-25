@@ -25345,8 +25345,6 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
                             if (HasSpell(tmpTalent->SpellRank[rank]))
                                 spentPoints += (rank + 1);
 
-    spentPoints = 51;
-
     // not have required min points spent in talent tree
     if (spentPoints < (talentInfo->TierID)) //* MAX_TALENT_RANK))
         return;
@@ -25644,6 +25642,8 @@ void Player::BuildPlayerTalentsInfoData(WorldPacket* data)
                     ++talentIdCount;
                 }
             }
+
+            talentIdCount += 51;
 
             data->put<uint8>(pos, talentIdCount);           // put real count
 
