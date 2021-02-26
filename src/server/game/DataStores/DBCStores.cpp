@@ -698,7 +698,7 @@ TalentSpellPos const* GetTalentSpellPos(uint32 spellId)
 uint32 GetTalentSpellCost(uint32 spellId)
 {
     if (TalentSpellPos const* pos = GetTalentSpellPos(spellId))
-        return pos->rank+51;
+        return pos->rank+1;
 
     return 0;
 }
