@@ -25643,8 +25643,6 @@ void Player::BuildPlayerTalentsInfoData(WorldPacket* data)
                 }
             }
 
-            talentIdCount += 51;
-
             data->put<uint8>(pos, talentIdCount);           // put real count
 
             *data << uint8(MAX_GLYPH_SLOT_INDEX);           // glyphs count
