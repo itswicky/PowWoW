@@ -587,6 +587,24 @@ void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, bo
         weaponMaxDamage += GetAmmoDPS() * attackPowerMod;
     }
 
+    switch (GetClass())
+    {
+        case CLASS_MAGE: // If talented into Spell Blade add a % of spell power, based on weapon speed, to weapon damage.
+        {
+            float spellpowerBonus = 0.0f;
+            float mhWeaponSpeed = GetAttackTime(BASE_ATTACK) / 1000.0f;
+            if (AuraEffect const* spMod = GetAuraEffect(SPELL_AURA_DUMMY, SPELLFAMILY_MAGE, 3054, EFFECT_0))
+            {
+                spellpowerBonus = CalculatePct(mhWeaponSpeed, spMod->GetAmount());
+                spellpowerBonus *= SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SPELL);
+
+                weaponMinDamage += spellpowerBonus;
+                weaponMaxDamage += spellpowerBonus;
+            }
+
+        }
+    }
+
     minDamage = ((weaponMinDamage + baseValue) * basePct + totalValue) * totalPct;
     maxDamage = ((weaponMaxDamage + baseValue) * basePct + totalValue) * totalPct;
 }

@@ -69,7 +69,12 @@ enum MageSpells
     SPELL_MAGE_MISSILE_BARRAGE                   = 44401,
     SPELL_MAGE_FINGERS_OF_FROST_AURASTATE_AURA   = 44544,
     SPELL_MAGE_PERMAFROST_AURA                   = 68391,
-    SPELL_MAGE_ARCANE_MISSILES_R1                = 5143
+    SPELL_MAGE_ARCANE_MISSILES_R1                = 5143,
+    SPELL_MAGE_SORCEROUS_SLASH_TRIGGER           = 81000,
+    SPELL_MAGE_SORCEROUS_SLASH_ARCANE_PROC       = 81002,
+    SPELL_MAGE_SORCEROUS_SLASH_FIRE_PROC         = 81003,
+    SPELL_MAGE_SORCEROUS_SLASH_FROST_PROC        = 81004,
+    SPELL_MAGE_SORCEROUS_SLASH_AA_PROC           = 81005
 };
 
 enum MageSpellIcons
@@ -1174,6 +1179,46 @@ class spell_mage_summon_water_elemental : public SpellScript
     }
 };
 
+// custom Battle Mage spell
+class spell_sorcerous_slash : public AuraScript
+{
+    PrepareAuraScript(spell_sorcerous_slash);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo({ SPELL_MAGE_SORCEROUS_SLASH_TRIGGER });
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetProcTarget() != nullptr;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+
+        Unit* victim = eventInfo.GetProcTarget();
+
+        int32 spBonus = GetTarget()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_ARCANE);
+        spBonus += victim->GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_DAMAGE_TAKEN, SPELL_SCHOOL_MASK_ARCANE);
+
+        float mws = GetTarget()->GetAttackTime(BASE_ATTACK);
+        mws /= 1000.0f;
+
+        int32 bp = std::lroundf(mws * (0.033f * spBonus));
+        CastSpellExtraArgs args(aurEff);
+        args.AddSpellBP0(bp);
+        GetTarget()->CastSpell(victim, SPELL_MAGE_SORCEROUS_SLASH_AA_PROC, args);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_sorcerous_slash::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_sorcerous_slash::HandleProc, EFFECT_2, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_mage_spell_scripts()
 {
     RegisterSpellScript(spell_mage_arcane_potency);
@@ -1210,4 +1255,5 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_missile_barrage_proc);
     new spell_mage_polymorph_cast_visual();
     RegisterSpellScript(spell_mage_summon_water_elemental);
+    RegisterSpellScript(spell_sorcerous_slash);
 }
