@@ -596,7 +596,7 @@ void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, bo
             if (AuraEffect const* spMod = GetAuraEffect(SPELL_AURA_DUMMY, SPELLFAMILY_MAGE, 3054, EFFECT_0))
             {
                 spellpowerBonus = CalculatePct(mhWeaponSpeed, spMod->GetAmount());
-                spellpowerBonus *= SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SPELL);
+                spellpowerBonus *= SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_ARCANE);
 
                 weaponMinDamage += spellpowerBonus;
                 weaponMaxDamage += spellpowerBonus;
