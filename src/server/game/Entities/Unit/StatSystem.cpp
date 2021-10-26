@@ -601,8 +601,10 @@ void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, bo
                 weaponMinDamage += spellpowerBonus;
                 weaponMaxDamage += spellpowerBonus;
             }
-
+            break;
         }
+        default:
+            break;
     }
 
     minDamage = ((weaponMinDamage + baseValue) * basePct + totalValue) * totalPct;
