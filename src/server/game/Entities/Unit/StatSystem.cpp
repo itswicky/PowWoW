@@ -203,6 +203,19 @@ void Player::UpdateSpellDamageAndHealingBonus()
         }));
         SetStatInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + i, SpellBaseDamageBonusDone(SpellSchoolMask(1 << i)) - GetInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_NEG + i));
     }
+
+    switch (GetClass())
+    {
+        case CLASS_MAGE: // update weapon damage in character sheet if Spell Blade is talented
+        {
+
+            if (AuraEffect const* spMod = GetAuraEffect(SPELL_AURA_DUMMY, SPELLFAMILY_MAGE, 3054, EFFECT_0))
+                UpdateAttackPowerAndDamage();
+            break;
+        }
+        default:
+            break;
+    }
 }
 
 bool Player::UpdateAllStats()
