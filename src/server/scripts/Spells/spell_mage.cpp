@@ -74,7 +74,8 @@ enum MageSpells
     SPELL_MAGE_SORCEROUS_SLASH_ARCANE_PROC       = 81002,
     SPELL_MAGE_SORCEROUS_SLASH_FIRE_PROC         = 81003,
     SPELL_MAGE_SORCEROUS_SLASH_FROST_PROC        = 81004,
-    SPELL_MAGE_SORCEROUS_SLASH_AA_PROC           = 81005
+    SPELL_MAGE_SORCEROUS_SLASH_AA_PROC           = 81005,
+    SPELL_MAGE_SPELL_BLADE                       = 81001
 };
 
 enum MageSpellIcons
@@ -1219,6 +1220,32 @@ class spell_sorcerous_slash : public AuraScript
     }
 };
 
+class spell_mage_spell_blade : public AuraScript
+{
+    PrepareAuraScript(spell_mage_spell_blade);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo({ SPELL_MAGE_SPELL_BLADE });
+    }
+
+    void HandleEffectApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        GetCaster()->UpdateAttackPowerAndDamage();
+    }
+
+    void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        GetCaster()->UpdateAttackPowerAndDamage();
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectApplyFn(spell_mage_spell_blade::HandleEffectApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_mage_spell_blade::HandleEffectRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+    }
+};
+
 void AddSC_mage_spell_scripts()
 {
     RegisterSpellScript(spell_mage_arcane_potency);
@@ -1256,4 +1283,5 @@ void AddSC_mage_spell_scripts()
     new spell_mage_polymorph_cast_visual();
     RegisterSpellScript(spell_mage_summon_water_elemental);
     RegisterSpellScript(spell_sorcerous_slash);
+    RegisterSpellScript(spell_mage_spell_blade);
 }
