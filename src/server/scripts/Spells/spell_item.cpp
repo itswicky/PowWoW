@@ -4394,9 +4394,6 @@ class spell_item_embrace_madness : public AuraScript
         caster->RemoveAura(81009);
         caster->RemoveAura(81010);
         caster->RemoveAura(81011);
-
-        caster->GetSpellHistory()->AddCooldown(EMBRACE_MADNESS, 0, std::chrono::seconds(12));
-        caster->GetSpellHistory()->SendCooldownEvent(GetSpellInfo());
     }
 
 
