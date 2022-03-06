@@ -4329,6 +4329,86 @@ class spell_item_eggnog : public SpellScript
     }
 };
 
+enum EmbraceMadness
+{
+    EMBRACE_MADNESS = 81008,
+};
+
+// 81008 Embrace Madness
+class spell_item_embrace_madness : public AuraScript
+{
+    PrepareAuraScript(spell_item_embrace_madness);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo({ EMBRACE_MADNESS });
+    }
+
+    void CalcPeriodic(AuraEffect const* /*aurEff*/, bool& isPeriodic, int32& amplitude)
+    {
+        isPeriodic = true;
+        amplitude = 2 * IN_MILLISECONDS;
+    }
+
+    void HandleDummyTick(AuraEffect const* aurEff)
+    {
+        PreventDefaultAction();
+        if (!aurEff->GetAmount())
+            return;
+
+        Unit* caster = GetCaster();
+        if (!caster)
+            return;
+
+        Player* player = caster->ToPlayer();
+        if (!player)
+            return;
+
+        std::vector<uint32> spellList =
+        {
+            81009,  // Complete Surrender - damage taken increase
+            81010,  // Paralysing Dread - reduces movement speed
+            81011   // Atrophy - reduces healing received
+        };
+
+        uint32 spellId = spellList[urand(0, spellList.size() - 1)];
+        switch (spellId)
+        {
+            default:
+                GetCaster()->CastSpell(caster, spellId, true);
+                break;
+        }
+    }
+
+    void HandleUpdatePeriodic(AuraEffect* aurEff)
+    {
+        aurEff->CalculatePeriodic(GetCaster());
+    }
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* caster = GetCaster();
+        if (!caster)
+            return;
+
+        caster->RemoveAura(81009);
+        caster->RemoveAura(81010);
+        caster->RemoveAura(81011);
+
+        caster->GetSpellHistory()->AddCooldown(EMBRACE_MADNESS, 0, std::chrono::seconds(12));
+    }
+
+
+    void Register() override
+    {
+        DoEffectCalcPeriodic += AuraEffectCalcPeriodicFn(spell_item_embrace_madness::CalcPeriodic, EFFECT_0, SPELL_AURA_MOD_RANGED_HASTE);
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_item_embrace_madness::HandleDummyTick, EFFECT_0, SPELL_AURA_MOD_RANGED_HASTE);
+        OnEffectUpdatePeriodic += AuraEffectUpdatePeriodicFn(spell_item_embrace_madness::HandleUpdatePeriodic, EFFECT_0, SPELL_AURA_MOD_RANGED_HASTE);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_item_embrace_madness::OnRemove, EFFECT_0, SPELL_AURA_MOD_RANGED_HASTE, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+
 void AddSC_item_spell_scripts()
 {
     // 23074 Arcanite Dragonling
@@ -4461,4 +4541,6 @@ void AddSC_item_spell_scripts()
     RegisterSpellScript(spell_item_mad_alchemists_potion);
     RegisterSpellScript(spell_item_crazy_alchemists_potion);
     RegisterSpellScript(spell_item_eggnog);
+
+    RegisterSpellScript(spell_item_embrace_madness);
 }
