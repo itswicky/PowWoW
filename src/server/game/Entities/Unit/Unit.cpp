@@ -3569,6 +3569,15 @@ void Unit::_RemoveNoStackAurasDueToAura(Aura* aura)
             i = m_appliedAuras.begin();
         }
 
+        Aura const* aura = i->second->GetBase();
+        SpellInfo const* spell = aura->GetSpellInfo();
+
+        if (spell->GetSpellSpecific() == SPELL_SPECIFIC_CURSE)
+            continue;
+        if (HasAura(81021))
+            if (aura->GetStackAmount() <= 1)
+                remove = false;
+
         if (aura->CanStackWith(i->second->GetBase()))
             continue;
 
