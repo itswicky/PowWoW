@@ -3560,6 +3560,32 @@ void Unit::_RemoveNoStackAurasDueToAura(Aura* aura)
         return;
     }
 
+    Unit* caster = aura->GetCaster();
+    int32 cursecount = 0;
+    int32 bonuscursecount = 0;
+
+    // Check how many curse auras are on the target and store in cursecount
+    for (AuraApplicationMap::iterator i = m_appliedAuras.begin(); i != m_appliedAuras.end(); ++i)
+    {
+        Aura const* auraz = i->second->GetBase();
+        SpellInfo const* spell = auraz->GetSpellInfo();
+        if (spell->GetSpellSpecific() != SPELL_SPECIFIC_CURSE)
+            continue;
+
+        ++cursecount;
+    }
+
+    // Check how many auras that should modify max curse limit are on caster and store in bonuscursecount
+    for (AuraApplicationMap::iterator i = caster->m_appliedAuras.begin(); i != caster->m_appliedAuras.end(); ++i)
+    {
+        Aura const* auraz = i->second->GetBase();
+        SpellInfo const* spell = auraz->GetSpellInfo();
+        if (spell->SpellFamilyName != SPELLFAMILY_WARLOCK || !(spell->SpellFamilyFlags[2] & 0x00020000))
+            continue;
+
+        ++bonuscursecount;
+    }
+
     bool remove = false;
     for (AuraApplicationMap::iterator i = m_appliedAuras.begin(); i != m_appliedAuras.end(); ++i)
     {
@@ -3569,21 +3595,41 @@ void Unit::_RemoveNoStackAurasDueToAura(Aura* aura)
             i = m_appliedAuras.begin();
         }
 
-        Aura const* aura = i->second->GetBase();
-        SpellInfo const* spell = aura->GetSpellInfo();
+        if (spellProto->GetSpellSpecific() == SPELL_SPECIFIC_CURSE)
+            if (cursecount == 0)
+                caster->ToPlayer()->GetSession()->SendNotification("cursecount = 0");
 
-        if (spell->GetSpellSpecific() == SPELL_SPECIFIC_CURSE)
-            continue;
-        if (HasAura(81021))
-            if (aura->GetStackAmount() <= 1)
-                remove = false;
+        if (spellProto->GetSpellSpecific() == SPELL_SPECIFIC_CURSE)
+            if (cursecount == 1)
+                caster->ToPlayer()->GetSession()->SendNotification("cursecount = 1");
+
+        if (spellProto->GetSpellSpecific() == SPELL_SPECIFIC_CURSE)
+            if (cursecount == 2)
+                caster->ToPlayer()->GetSession()->SendNotification("cursecount = 2");
+
+        if (spellProto->GetSpellSpecific() == SPELL_SPECIFIC_CURSE)
+            if (cursecount > 2)
+                caster->ToPlayer()->GetSession()->SendNotification("cursecount > 2");
+        // Check if the amount of curses on target are fewer than the amount of max curse auras allowed on target.
+        // We have to add 1 to bonuscursecount value because by default we can apply 1 curse to the target.
+        if (spellProto->GetSpellSpecific() == SPELL_SPECIFIC_CURSE)
+            if (cursecount <= (bonuscursecount + 1))
+                continue;
 
         if (aura->CanStackWith(i->second->GetBase()))
             continue;
 
         RemoveAura(i, AURA_REMOVE_BY_DEFAULT);
+
+        // Check if we have removed a curse and have a bonuscursecount value greater than 0.
+        // This is to prevent removing all curse auras on the target when we exceed our curse limit.
+        if (spellProto->GetSpellSpecific() == SPELL_SPECIFIC_CURSE)
+            if (cursecount > (bonuscursecount + 1) && bonuscursecount > 0)
+                break;
+
         if (i == m_appliedAuras.end())
             break;
+
         remove = true;
     }
 }
