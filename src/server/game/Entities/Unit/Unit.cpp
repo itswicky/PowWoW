@@ -3567,8 +3567,8 @@ void Unit::_RemoveNoStackAurasDueToAura(Aura* aura)
     // Check how many curse auras are on the target and store in cursecount
     for (AuraApplicationMap::iterator i = m_appliedAuras.begin(); i != m_appliedAuras.end(); ++i)
     {
-        Aura const* auraz = i->second->GetBase();
-        SpellInfo const* spell = auraz->GetSpellInfo();
+        Aura const* aur = i->second->GetBase();
+        SpellInfo const* spell = aur->GetSpellInfo();
         if (spell->GetSpellSpecific() != SPELL_SPECIFIC_CURSE)
             continue;
 
@@ -3578,8 +3578,8 @@ void Unit::_RemoveNoStackAurasDueToAura(Aura* aura)
     // Check how many auras that should modify max curse limit are on caster and store in bonuscursecount
     for (AuraApplicationMap::iterator i = caster->m_appliedAuras.begin(); i != caster->m_appliedAuras.end(); ++i)
     {
-        Aura const* auraz = i->second->GetBase();
-        SpellInfo const* spell = auraz->GetSpellInfo();
+        Aura const* aur = i->second->GetBase();
+        SpellInfo const* spell = aur->GetSpellInfo();
         if (spell->SpellFamilyName != SPELLFAMILY_WARLOCK || !(spell->SpellFamilyFlags[2] & 0x00020000))
             continue;
 
@@ -3595,21 +3595,6 @@ void Unit::_RemoveNoStackAurasDueToAura(Aura* aura)
             i = m_appliedAuras.begin();
         }
 
-        if (spellProto->GetSpellSpecific() == SPELL_SPECIFIC_CURSE)
-            if (cursecount == 0)
-                caster->ToPlayer()->GetSession()->SendNotification("cursecount = 0");
-
-        if (spellProto->GetSpellSpecific() == SPELL_SPECIFIC_CURSE)
-            if (cursecount == 1)
-                caster->ToPlayer()->GetSession()->SendNotification("cursecount = 1");
-
-        if (spellProto->GetSpellSpecific() == SPELL_SPECIFIC_CURSE)
-            if (cursecount == 2)
-                caster->ToPlayer()->GetSession()->SendNotification("cursecount = 2");
-
-        if (spellProto->GetSpellSpecific() == SPELL_SPECIFIC_CURSE)
-            if (cursecount > 2)
-                caster->ToPlayer()->GetSession()->SendNotification("cursecount > 2");
         // Check if the amount of curses on target are fewer than the amount of max curse auras allowed on target.
         // We have to add 1 to bonuscursecount value because by default we can apply 1 curse to the target.
         if (spellProto->GetSpellSpecific() == SPELL_SPECIFIC_CURSE)
