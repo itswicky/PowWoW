@@ -3563,6 +3563,7 @@ void Unit::_RemoveNoStackAurasDueToAura(Aura* aura)
     Unit* caster = aura->GetCaster();
     int32 cursecount = 0;
     int32 bonuscursecount = 0;
+    bool cursebreak = false;
 
     // Check how many curse auras are on the target and store in cursecount
     for (AuraApplicationMap::iterator i = m_appliedAuras.begin(); i != m_appliedAuras.end(); ++i)
@@ -3583,6 +3584,9 @@ void Unit::_RemoveNoStackAurasDueToAura(Aura* aura)
         if (spell->SpellFamilyName != SPELLFAMILY_WARLOCK || !(spell->SpellFamilyFlags[2] & 0x00020000))
             continue;
 
+        if (spell->Id == 81023)
+            cursebreak = true;
+
         ++bonuscursecount;
     }
 
@@ -3598,7 +3602,7 @@ void Unit::_RemoveNoStackAurasDueToAura(Aura* aura)
         // Check if the amount of curses on target are fewer than the amount of max curse auras allowed on target.
         // We have to add 1 to bonuscursecount value because by default we can apply 1 curse to the target.
         if (spellProto->GetSpellSpecific() == SPELL_SPECIFIC_CURSE)
-            if (cursecount <= (bonuscursecount + 1))
+            if ((cursecount <= (bonuscursecount + 1)) || cursebreak)
                 continue;
 
         if (aura->CanStackWith(i->second->GetBase()))
