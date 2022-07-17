@@ -2659,7 +2659,9 @@ void Player::GiveLevel(uint8 level)
 
     sScriptMgr->OnPlayerLevelChanged(this, oldLevel);
 
-    AddItem(60000, 1); // Add custom Ability Point Token on level up
+    uint8 levelDiff = level - oldLevel;
+
+    AddItem(60000, levelDiff); // Add custom Ability Point Token on level up
 }
 
 
