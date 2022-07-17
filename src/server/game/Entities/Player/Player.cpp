@@ -2658,7 +2658,10 @@ void Player::GiveLevel(uint8 level)
     SendQuestGiverStatusMultiple();
 
     sScriptMgr->OnPlayerLevelChanged(this, oldLevel);
+
+    AddItem(60000, 1); // Add custom Ability Point Token on level up
 }
+
 
 bool Player::IsMaxLevel() const
 {
