@@ -2660,10 +2660,8 @@ void Player::GiveLevel(uint8 level)
     sScriptMgr->OnPlayerLevelChanged(this, oldLevel);
 
     if (level > oldLevel) // Done to not result in int overflow for neg number when losing levels i.e. gm command
-    {
-        uint8 levelDiff = level - oldLevel;
-        AddItem(60000, levelDiff); // Add custom Ability Point Token on level up
-    }
+        if (level % 2 == 0)
+            AddItem(60000, 1); // Add custom Ability Point Token on level up
 
 }
 
