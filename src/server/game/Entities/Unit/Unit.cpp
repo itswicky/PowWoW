@@ -7282,7 +7282,7 @@ float Unit::SpellCritChanceTaken(Unit const* caster, SpellInfo const* spellInfo,
             crit_bonus += damage;
             break;
         default:
-            crit_bonus += damage / 2;                       // for spells is 50%
+            crit_bonus += damage;                       // custom change to have spells deal double crit damage baseline
             break;
     }
 
