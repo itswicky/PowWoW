@@ -95,7 +95,7 @@ namespace Trainer
             return;
         }
 
-        float reputationDiscount = player->GetReputationPriceDiscount(npc);
+        /*float reputationDiscount = player->GetReputationPriceDiscount(npc);
         int32 moneyCost = int32(trainerSpell->MoneyCost * reputationDiscount);
         if (!player->HasEnoughMoney(moneyCost))
         {
@@ -103,7 +103,14 @@ namespace Trainer
             return;
         }
 
-        player->ModifyMoney(-moneyCost);
+        player->ModifyMoney(-moneyCost);*/
+
+        if (player->GetItemCount(60000) < 2) // Have less than 2 ability points
+        {
+            SendTeachFailure(npc, player, spellId, FailReason::NotEnoughMoney);
+            player->GetSession()->SendNotification("You do not have enough Ability Points");
+            return;
+        }
 
         npc->SendPlaySpellVisual(179);
         npc->SendPlaySpellImpact(player->GetGUID(), 362);
@@ -113,6 +120,8 @@ namespace Trainer
             player->CastSpell(player, trainerSpell->SpellId, true);
         else
             player->LearnSpell(trainerSpell->SpellId, false);
+
+        player->DestroyItemCount(60000, 2, true);
 
         SendTeachSucceeded(npc, player, spellId);
     }
