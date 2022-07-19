@@ -85,6 +85,9 @@ enum MageSpells
     SPELL_MAGE_FROST_MASTERY_R3                  = 83018,
     SPELL_MAGE_FROST_MASTERY_R4                  = 83019,
     SPELL_MAGE_FROST_MASTERY_R5                  = 83020,
+    SPELL_MAGE_ARCANE_MASTERY_DUMMY              = 83000,
+    SPELL_MAGE_FIRE_MASTERY_DUMMY                = 83007,
+    SPELL_MAGE_FROST_MASTERY_DUMMY               = 83014,
 };
 
 enum MageSpellIcons
@@ -1189,123 +1192,37 @@ class spell_mage_summon_water_elemental : public SpellScript
     }
 };
 
-class spell_mage_arcane_mastery : public AuraScript
-{
-    PrepareAuraScript(spell_mage_arcane_mastery);
-
-    bool Validate(SpellInfo const* /*spellInfo*/) override
-    {
-        return ValidateSpellInfo({ MAGE_MASTERY_ARCANE });
-    }
-
-    void HandleEffectApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
-    {
-        Unit* caster = GetCaster();
-        uint32 stackAmount = GetStackAmount();
-
-        if (stackAmount > 17 && !caster->HasAura(SPELL_MAGE_ARCANE_MASTERY_R5))
-            caster->AddAura(SPELL_MAGE_ARCANE_MASTERY_R5, caster);
-        else if (stackAmount > 12 && !caster->HasAura(SPELL_MAGE_ARCANE_MASTERY_R4))
-            caster->AddAura(SPELL_MAGE_ARCANE_MASTERY_R4, caster);
-        else if (stackAmount > 8 && !caster->HasAura(SPELL_MAGE_ARCANE_MASTERY_R3))
-            caster->AddAura(SPELL_MAGE_ARCANE_MASTERY_R3, caster);
-        else if (stackAmount > 5 && !caster->HasAura(SPELL_MAGE_ARCANE_MASTERY_R2))
-            caster->AddAura(SPELL_MAGE_ARCANE_MASTERY_R2, caster);
-        else if (stackAmount > 3 && !caster->HasAura(SPELL_MAGE_ARCANE_MASTERY_R1))
-            caster->AddAura(SPELL_MAGE_ARCANE_MASTERY_R1, caster);
-        else
-            return;
-    }
-    
-    //void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
-    //{
-    //    GetTarget()->RemoveOwnedAura(SPELL_PALADIN_AURA_MASTERY_IMMUNE, GetCasterGUID());
-    //}
-
-    void Register() override
-    {
-        AfterEffectApply += AuraEffectApplyFn(spell_mage_arcane_mastery::HandleEffectApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_CHANGE_AMOUNT);
-        //AfterEffectRemove += AuraEffectRemoveFn(spell_mage_arcane_mastery::HandleEffectRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
-    }
-};
-
-class spell_mage_fire_mastery : public AuraScript
-{
-    PrepareAuraScript(spell_mage_fire_mastery);
-
-    bool Validate(SpellInfo const* /*spellInfo*/) override
-    {
-        return ValidateSpellInfo({ MAGE_MASTERY_FIRE });
-    }
-
-    void HandleEffectApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
-    {
-        Unit* caster = GetCaster();
-        uint32 stackAmount = GetStackAmount();
-
-        if (stackAmount > 17 && !caster->HasAura(SPELL_MAGE_FIRE_MASTERY_R5))
-            caster->AddAura(SPELL_MAGE_FIRE_MASTERY_R5, caster);
-        else if (stackAmount > 12 && !caster->HasAura(SPELL_MAGE_FIRE_MASTERY_R4))
-            caster->AddAura(SPELL_MAGE_FIRE_MASTERY_R4, caster);
-        else if (stackAmount > 8 && !caster->HasAura(SPELL_MAGE_FIRE_MASTERY_R3))
-            caster->AddAura(SPELL_MAGE_FIRE_MASTERY_R3, caster);
-        else if (stackAmount > 5 && !caster->HasAura(SPELL_MAGE_FIRE_MASTERY_R2))
-            caster->AddAura(SPELL_MAGE_FIRE_MASTERY_R2, caster);
-        else if (stackAmount > 3 && !caster->HasAura(SPELL_MAGE_FIRE_MASTERY_R1))
-            caster->AddAura(SPELL_MAGE_FIRE_MASTERY_R1, caster);
-        else
-            return;
-    }
-
-    //void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
-    //{
-    //    GetTarget()->RemoveOwnedAura(SPELL_PALADIN_AURA_MASTERY_IMMUNE, GetCasterGUID());
-    //}
-
-    void Register() override
-    {
-        AfterEffectApply += AuraEffectApplyFn(spell_mage_fire_mastery::HandleEffectApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_CHANGE_AMOUNT);
-        //AfterEffectRemove += AuraEffectRemoveFn(spell_mage_arcane_mastery::HandleEffectRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
-    }
-};
-
 class spell_mage_frost_mastery : public AuraScript
 {
     PrepareAuraScript(spell_mage_frost_mastery);
 
     bool Validate(SpellInfo const* /*spellInfo*/) override
     {
-        return ValidateSpellInfo({ MAGE_MASTERY_ARCANE });
+        return ValidateSpellInfo({ SPELL_MAGE_FROST_MASTERY_DUMMY });
     }
 
     void HandleEffectApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        Unit* caster = GetCaster();
+        Player* caster = GetCaster()->ToPlayer();
         uint32 stackAmount = GetStackAmount();
 
-        if (stackAmount > 17 && !caster->HasAura(SPELL_MAGE_FROST_MASTERY_R5))
-            caster->AddAura(SPELL_MAGE_FROST_MASTERY_R5, caster);
-        else if (stackAmount > 12 && !caster->HasAura(SPELL_MAGE_FROST_MASTERY_R4))
-            caster->AddAura(SPELL_MAGE_FROST_MASTERY_R4, caster);
-        else if (stackAmount > 8 && !caster->HasAura(SPELL_MAGE_FROST_MASTERY_R3))
-            caster->AddAura(SPELL_MAGE_FROST_MASTERY_R3, caster);
-        else if (stackAmount > 5 && !caster->HasAura(SPELL_MAGE_FROST_MASTERY_R2))
-            caster->AddAura(SPELL_MAGE_FROST_MASTERY_R2, caster);
-        else if (stackAmount > 3 && !caster->HasAura(SPELL_MAGE_FROST_MASTERY_R1))
-            caster->AddAura(SPELL_MAGE_FROST_MASTERY_R1, caster);
+        if (stackAmount >= 17 && !caster->HasAura(SPELL_MAGE_FROST_MASTERY_R5))
+            caster->LearnSpell(SPELL_MAGE_FROST_MASTERY_R5, false);
+        else if (stackAmount >= 12 && !caster->HasAura(SPELL_MAGE_FROST_MASTERY_R4))
+            caster->LearnSpell(SPELL_MAGE_FROST_MASTERY_R4, false);
+        else if (stackAmount >= 8 && !caster->HasAura(SPELL_MAGE_FROST_MASTERY_R3))
+            caster->LearnSpell(SPELL_MAGE_FROST_MASTERY_R3, false);
+        else if (stackAmount >= 5 && !caster->HasAura(SPELL_MAGE_FROST_MASTERY_R2))
+            caster->LearnSpell(SPELL_MAGE_FROST_MASTERY_R2, false);
+        else if (stackAmount >= 3 && !caster->HasAura(SPELL_MAGE_FROST_MASTERY_R1))
+            caster->LearnSpell(SPELL_MAGE_FROST_MASTERY_R1, false);
         else
             return;
     }
 
-    //void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
-    //{
-    //    GetTarget()->RemoveOwnedAura(SPELL_PALADIN_AURA_MASTERY_IMMUNE, GetCasterGUID());
-    //}
-
     void Register() override
     {
         AfterEffectApply += AuraEffectApplyFn(spell_mage_frost_mastery::HandleEffectApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_CHANGE_AMOUNT);
-        //AfterEffectRemove += AuraEffectRemoveFn(spell_mage_arcane_mastery::HandleEffectRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1345,7 +1262,5 @@ void AddSC_mage_spell_scripts()
     RegisterSpellScript(spell_mage_missile_barrage_proc);
     new spell_mage_polymorph_cast_visual();
     RegisterSpellScript(spell_mage_summon_water_elemental);
-    RegisterSpellScript(spell_mage_arcane_mastery);
-    RegisterSpellScript(spell_mage_fire_mastery);
     RegisterSpellScript(spell_mage_frost_mastery);
 }
