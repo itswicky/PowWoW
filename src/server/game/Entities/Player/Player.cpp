@@ -25237,6 +25237,22 @@ void Player::CompletedAchievement(AchievementEntry const* entry)
     m_achievementMgr->CompletedAchievement(entry);
 }
 
+// Used to determine what mastery spell we should add to the player. Called in TeachSpell() in Trainer.cpp
+uint32 Player::GetSpellMasterySpell(uint32 skillline)
+{
+    switch (skillline)
+    {
+        case 6:
+            return MAGE_MASTERY_FROST;
+        case 8:
+            return MAGE_MASTERY_FIRE;
+        case 237:
+            return MAGE_MASTERY_ARCANE;
+        default:
+            break;
+    }
+}
+
 void Player::LearnTalent(uint32 talentId, uint32 talentRank)
 {
     uint32 CurTalentPoints = GetFreeTalentPoints();

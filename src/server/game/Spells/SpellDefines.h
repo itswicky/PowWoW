@@ -204,6 +204,13 @@ enum SpellCastTargetFlags : uint32
     TARGET_FLAG_ITEM_MASK = TARGET_FLAG_TRADE_ITEM | TARGET_FLAG_ITEM | TARGET_FLAG_GAMEOBJECT_ITEM
 };
 
+enum SpellMasteryID : uint32
+{
+    MAGE_MASTERY_ARCANE     = 83000,
+    MAGE_MASTERY_FIRE       = 83007,
+    MAGE_MASTERY_FROST      = 83014,
+};
+
 struct TC_GAME_API SpellDestination
 {
     SpellDestination();

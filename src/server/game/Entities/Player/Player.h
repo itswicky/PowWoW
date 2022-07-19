@@ -1454,6 +1454,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         void LearnTalent(uint32 talentId, uint32 talentRank);
         void LearnPetTalent(ObjectGuid petGuid, uint32 talentId, uint32 talentRank);
         void SendTameFailure(uint8 result);
+        uint32 GetSpellMasterySpell(uint32 skillline);
 
         bool AddTalent(uint32 spellId, uint8 spec, bool learning);
         bool HasTalent(uint32 spell_id, uint8 spec) const;
