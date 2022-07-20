@@ -211,6 +211,37 @@ enum SpellMasteryID : uint32
     MAGE_MASTERY_FROST      = 83014,
 };
 
+enum SkillLineID : uint32
+{
+    DRUID_BALANCE           = 574,
+    DRUID_FERAL             = 134,
+    DRUID_RESTORATION       = 573,
+    HUNTER_BEASTMASTERY     = 50,
+    HUNTER_MARKSMANSHIP     = 163,
+    HUNTER_SURVIVAL         = 51,
+    MAGE_ARCANE             = 237,
+    MAGE_FIRE               = 8,
+    MAGE_FROST              = 6,
+    PALADIN_HOLY            = 594,
+    PALADIN_PROTECTION      = 267,
+    PALADIN_RETRIBUTION     = 184,
+    PRIEST_DISCIPLINE       = 613,
+    PRIEST_HOLY             = 594,
+    PRIEST_SHADOW           = 78,
+    ROGUE_ASSASSINATION     = 253,
+    ROGUE_COMBAT            = 38,
+    ROGUE_SUBTLETY          = 39,
+    SHAMAN_ELEMENTAL        = 375,
+    SHAMAN_ENHANCEMENT      = 373,
+    SHAMAN_RESTORATION      = 374,
+    WARLOCK_AFFLICTION      = 355,
+    WARLOCK_DEMONOLOGY      = 354,
+    WARLOCK_DESTRUCTION     = 593,
+    WARRIOR_ARMS            = 26,
+    WARRIOR_FURY            = 256,
+    WARRIOR_PROTECTION      = 257,
+};
+
 struct TC_GAME_API SpellDestination
 {
     SpellDestination();

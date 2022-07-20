@@ -3863,6 +3863,45 @@ uint32 Player::ResetTalentsCost() const
     }
 }
 
+bool Player::ResetAbilities()
+{
+    RemovePet(nullptr, PET_SAVE_NOT_IN_SLOT, true);
+
+    for (uint32 spellId = 0; spellId < sSkillLineAbilityStore.GetNumRows(); ++spellId) // check through skillineability.dbc
+    {
+        SkillLineAbilityEntry const* spellInfo = sSkillLineAbilityStore.LookupEntry(spellId); // define value for entry in skillineability.dbc
+
+        if (!spellId)
+            continue;
+
+        SkillLineAbilityEntry const* spellClassmaskInfo = sSkillLineAbilityStore.LookupEntry(spellInfo->ClassMask); // define value for classmask in skillineability.dbc
+
+        if (!spellClassmaskInfo)
+            continue;
+
+        // unlearn only spells for character class
+        if ((GetClassMask() & spellClassmaskInfo->ClassMask) == 0)
+            continue;
+
+        SpellInfo const* _spellEntry = sSpellMgr->GetSpellInfo(spellInfo->Spell); // define value for spell id in skillineability.dbc
+        if (!_spellEntry)
+            continue;
+        // After all checks should only remove if there is an entry in skillineability.dbc,
+        // that the entry has a classmask value that matches that of the player,
+        // and that the value for spell exists in spell.dbc
+        RemoveSpell(spellInfo->Spell, true);
+
+        AddItem(60000, 2); // refund ability points for each spell unlearned
+    }
+
+    CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+    _SaveTalents(trans);
+    _SaveSpells(trans);
+    CharacterDatabase.CommitTransaction(trans);
+
+    return true;
+}
+
 bool Player::ResetTalents(bool no_cost)
 {
     sScriptMgr->OnPlayerTalentsReset(this, no_cost);

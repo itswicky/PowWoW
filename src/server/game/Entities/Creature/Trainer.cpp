@@ -131,7 +131,7 @@ namespace Trainer
                     uint32 spellMastery = skilllineInfo->SkillLine;
                     uint32 masterySpell = player->GetSpellMasterySpell(spellMastery);
                     if (!masterySpell)
-                        player->GetSession()->SendNotification("You were not properly awareded mastery ranks. Please inform admin");
+                        player->GetSession()->SendNotification("You were not properly awarded mastery ranks. Please inform admin");
                     else
                         player->AddAura(masterySpell, player);
                 }        
