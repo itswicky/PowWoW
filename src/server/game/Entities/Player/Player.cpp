@@ -14485,6 +14485,10 @@ void Player::OnGossipSelect(WorldObject* source, uint32 gossipListId, uint32 men
             PlayerTalkClass->SendCloseGossip();
             ResetPetTalents();
             break;
+        case GOSSIP_OPTION_UNLEARNABILITIES:
+            PlayerTalkClass->SendCloseGossip();
+            ResetAbilities();
+            break;
         case GOSSIP_OPTION_TAXIVENDOR:
             GetSession()->SendTaxiMenu(source->ToCreature());
             break;
