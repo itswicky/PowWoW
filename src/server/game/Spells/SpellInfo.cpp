@@ -416,7 +416,8 @@ int32 SpellEffectInfo::CalcValue(WorldObject const* caster /*= nullptr*/, int32 
 
         // if base level is greater than spell level, reduce by base level (eg. pilgrims foods)
         level -= int32(std::max(_spellInfo->BaseLevel, _spellInfo->SpellLevel));
-        basePoints += int32(level * basePointsPerLevel);
+        //basePoints += int32(level * basePointsPerLevel);
+        basePoints += int32(level * (basePointsPerLevel / (60 / level)));
     }
 
     // roll in a range <1;EffectDieSides> as of patch 3.3.3
@@ -443,6 +444,9 @@ int32 SpellEffectInfo::CalcValue(WorldObject const* caster /*= nullptr*/, int32 
         if (uint8 comboPoints = casterUnit->GetComboPoints())
             value += PointsPerComboPoint * comboPoints;
     }
+
+    if ((Effect == SPELL_EFFECT_SCHOOL_DAMAGE || Effect == SPELL_EFFECT_HEAL)&& casterUnit && basePointsPerLevel >= 1 && _spellInfo->BaseLevel == 1 && _spellInfo->MaxLevel == 80)
+        value *= frand(0.9f, 1.1f);
 
     if (caster)
         value = caster->ApplyEffectModifiers(_spellInfo, EffectIndex, value);
