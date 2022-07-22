@@ -3867,37 +3867,51 @@ bool Player::ResetAbilities()
 {
     RemovePet(nullptr, PET_SAVE_NOT_IN_SLOT, true);
 
-    for (uint32 spellId = 0; spellId < sSkillLineAbilityStore.GetNumRows(); ++spellId) // check through skillineability.dbc
+    for (uint32 i = 0; i < sSkillLineAbilityStore.GetNumRows(); ++i) // check through skillineability.dbc
     {
-        SkillLineAbilityEntry const* spellInfo = sSkillLineAbilityStore.LookupEntry(spellId); // define value for entry in skillineability.dbc
+        SkillLineAbilityEntry const* spellInfo = sSkillLineAbilityStore.LookupEntry(i); // define value for entry in skillineability.dbc
 
-        if (!spellId)
+        if (!spellInfo)
             continue;
 
-        SkillLineAbilityEntry const* spellClassmaskInfo = sSkillLineAbilityStore.LookupEntry(spellInfo->ClassMask); // define value for classmask in skillineability.dbc
+        uint32 spellClassmaskInfo = spellInfo->ClassMask; // define value for classmask in skillineability.dbc
 
         if (!spellClassmaskInfo)
             continue;
 
-        // unlearn only spells for character class
-        if ((GetClassMask() & spellClassmaskInfo->ClassMask) == 0)
+        // unlearn only spells for character class. Avoid unlearning spells which are masked for multiple classess this way. e.g. Shoot (5019)
+        if (GetClassMask() != spellClassmaskInfo)
             continue;
 
-        SpellInfo const* _spellEntry = sSpellMgr->GetSpellInfo(spellInfo->Spell); // define value for spell id in skillineability.dbc
+        uint32 spellId = spellInfo->Spell; // define value for spell id in skillineability.dbc
+        // confirm spell exists in spell.dbc
+        SpellInfo const* _spellEntry = sSpellMgr->GetSpellInfo(spellId);
         if (!_spellEntry)
             continue;
-        // After all checks should only remove if there is an entry in skillineability.dbc,
-        // that the entry has a classmask value that matches that of the player,
-        // and that the value for spell exists in spell.dbc
-        RemoveSpell(spellInfo->Spell, true);
 
-        AddItem(60000, 2); // refund ability points for each spell unlearned
+        // skip passive and hidden spells. will update function at later date to refund tp for passive spells.
+        if (_spellEntry->HasAttribute(SPELL_ATTR0_PASSIVE) || _spellEntry->HasAttribute(SPELL_ATTR0_HIDDEN_CLIENTSIDE))
+            continue;
+        
+        // After all checks, we should only remove if there is an entry in skillineability.dbc,
+        // if the entry has a classmask value that matches that of the player,
+        // if the value for spell exists in spell.dbc, and if the player already knows that spell. 
+        if (HasSpell(spellId) && spellId)
+        {
+            TC_LOG_INFO("server.worldserver", "Player::ResetAbilities: SpellID: %u\n", spellId);  // debug logging. remove at later point
+            RemoveSpell(spellId, true);
+            AddItem(60000, 2);                      // refund ability points
+        }
     }
+
+    // IsSpellFitByClassAndRace - potentially relevant function
 
     CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
     _SaveTalents(trans);
     _SaveSpells(trans);
     CharacterDatabase.CommitTransaction(trans);
+
+    RemoveMasteries();
 
     return true;
 }
@@ -14273,6 +14287,7 @@ void Player::PrepareGossipMenu(WorldObject* source, uint32 menuId /*= 0*/, bool 
                 case GOSSIP_OPTION_QUESTGIVER:
                     canTalk = false;
                     break;
+                case GOSSIP_OPTION_UNLEARNABILITIES:
                 case GOSSIP_OPTION_TRAINER:
                 {
                     Trainer::Trainer const* trainer = sObjectMgr->GetTrainer(creature->GetEntry());
@@ -25294,6 +25309,30 @@ uint32 Player::GetSpellMasterySpell(uint32 skillline)
         default:
             break;
     }
+}
+
+bool Player::RemoveMasteries()
+{
+    uint8 chrClass = GetClass();
+
+    switch (chrClass)
+    {
+        case CLASS_MAGE:
+            // Arcane Mastery spells
+            RemoveSpell(83000);
+            RemoveSpell(83002);
+            // Fire Mastery spells
+            RemoveSpell(83007);
+            RemoveSpell(83009);
+            // Frost Mastery spell
+            RemoveSpell(83014);
+            RemoveSpell(83016);            
+            break;
+        default:
+            break;
+    }
+
+    return true;
 }
 
 void Player::LearnTalent(uint32 talentId, uint32 talentRank)
