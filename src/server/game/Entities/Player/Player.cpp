@@ -2675,7 +2675,7 @@ void Player::InitAbilityPointsForLevel()
     uint8 apCount = 0;
     uint8 apLevel = floor(level / 2);
     uint8 currentAP = GetItemCount(60000);
-    uint8 trainedSpellCount = 0;
+    uint8 abilitySpellCount = 0;
     // Item* abilityPoint = GetItemByEntry(60000);
 
     for (uint32 i = 0; i < sSkillLineAbilityStore.GetNumRows(); ++i) 
@@ -2706,10 +2706,10 @@ void Player::InitAbilityPointsForLevel()
             continue;
 
         if (HasSpell(spellId) && spellId)
-            ++trainedSpellCount;
+            ++abilitySpellCount;
     }
 
-    apCount = (trainedSpellCount * 2) + currentAP;
+    apCount = (abilitySpellCount * 2) + currentAP;
     if (apCount != apLevel)
         if (apCount < apLevel)
         {
@@ -2719,7 +2719,7 @@ void Player::InitAbilityPointsForLevel()
         }
         else if (apCount > apLevel)
         {
-            uint8 removeAmount = apCount - apLevel;
+            uint32 removeAmount = apCount - apLevel;
             DestroyItemCount(60000, removeAmount, true);
         }
         else
@@ -2732,7 +2732,7 @@ void Player::InitPassivePointsForLevel()
     uint8 ppCount = 0;
     uint8 ppLevel = floor(level / 3);
     uint8 currentPP = GetItemCount(60001);
-    uint8 trainedSpellCount = 0;
+    uint8 passiveSpellCount = 0;
 
     for (uint32 i = 0; i < sSkillLineAbilityStore.GetNumRows(); ++i)
     {
@@ -2758,14 +2758,18 @@ void Player::InitPassivePointsForLevel()
         if (!_spellEntry)
             continue;
 
-        if (!_spellEntry->HasAttribute(SPELL_ATTR0_PASSIVE))
+        if (!_spellEntry->HasAttribute(SPELL_ATTR0_PASSIVE) || _spellEntry->HasAttribute(SPELL_ATTR0_HIDDEN_CLIENTSIDE))
+            continue;
+
+        // skip mastery spells
+        if (_spellEntry->HasAttribute(SPELL_ATTR0_ABILITY) && _spellEntry->HasAttribute(SPELL_ATTR0_PASSIVE) && _spellEntry->HasAttribute(SPELL_ATTR3_CANT_TRIGGER_PROC) && _spellEntry->HasAttribute(SPELL_ATTR4_NOT_STEALABLE))
             continue;
 
         if (HasSpell(spellId) && spellId)
-            ++trainedSpellCount;
+            ++passiveSpellCount;
     }
 
-    ppCount = (trainedSpellCount * 2) + currentPP;
+    ppCount = (passiveSpellCount * 2) + currentPP;
     if (ppCount != ppLevel)
         if (ppCount < ppLevel)
         {
@@ -2775,7 +2779,7 @@ void Player::InitPassivePointsForLevel()
         }
         else if (ppCount > ppLevel)
         {
-            uint8 removeAmount = ppCount - ppLevel;
+            uint32 removeAmount = ppCount - ppLevel;
             DestroyItemCount(60001, removeAmount, true);
         }
         else
@@ -4003,6 +4007,14 @@ bool Player::ResetAbilities()
         // confirm spell exists in spell.dbc
         SpellInfo const* _spellEntry = sSpellMgr->GetSpellInfo(spellId);
         if (!_spellEntry)
+            continue;
+
+        // do not check/remove spells which are hidden client side
+        if (_spellEntry->HasAttribute(SPELL_ATTR0_HIDDEN_CLIENTSIDE))
+            continue;
+
+        // skip mastery spells. We remove these later with RemoveMasteries()
+        if (_spellEntry->HasAttribute(SPELL_ATTR0_ABILITY) && _spellEntry->HasAttribute(SPELL_ATTR0_PASSIVE) && _spellEntry->HasAttribute(SPELL_ATTR3_CANT_TRIGGER_PROC) && _spellEntry->HasAttribute(SPELL_ATTR4_NOT_STEALABLE))
             continue;
 
         // refund passive points if is a passive spell
@@ -17927,8 +17939,6 @@ bool Player::LoadFromDB(ObjectGuid guid, CharacterDatabaseQueryHolder const& hol
 
     // after spell and quest load
     InitTalentForLevel();
-    InitAbilityPointsForLevel();
-    InitPassivePointsForLevel();
     LearnDefaultSkills();
     LearnCustomSpells();
 
@@ -18049,6 +18059,9 @@ bool Player::LoadFromDB(ObjectGuid guid, CharacterDatabaseQueryHolder const& hol
     m_achievementMgr->CheckAllAchievementCriteria();
 
     _LoadEquipmentSets(holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_EQUIPMENT_SETS));
+
+    InitAbilityPointsForLevel();
+    InitPassivePointsForLevel();
 
     return true;
 }
@@ -25437,19 +25450,19 @@ uint32 Player::GetSpellMasterySpell(uint32 skillline)
 
 bool Player::RemoveMasteries()
 {
-    uint8 chrClass = GetClass();
+    uint32 chrClass = GetClass();
 
     switch (chrClass)
     {
         case CLASS_MAGE:
             // Arcane Mastery spells
-            RemoveSpell(83000);
+            RemoveAura(83000);
             RemoveSpell(83002);
             // Fire Mastery spells
-            RemoveSpell(83007);
+            RemoveAura(83007);
             RemoveSpell(83009);
             // Frost Mastery spell
-            RemoveSpell(83014);
+            RemoveAura(83014);
             RemoveSpell(83016);            
             break;
         default:
