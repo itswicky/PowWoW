@@ -3899,7 +3899,7 @@ bool Player::ResetAbilities()
         if (HasSpell(spellId) && spellId)
         {
             TC_LOG_INFO("server.worldserver", "Player::ResetAbilities: SpellID: %u\n", spellId);  // debug logging. remove at later point
-            RemoveSpell(spellId, true);
+            RemoveSpell(spellId, false, false);
             AddItem(60000, 2);                      // refund ability points
         }
     }
