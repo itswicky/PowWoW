@@ -2618,6 +2618,7 @@ void Player::GiveLevel(uint8 level)
 
     InitTalentForLevel();
     InitAbilityPointsForLevel();
+    InitPassivePointsForLevel();
     InitTaxiNodesForLevel();
     InitGlyphsForLevel();
 
@@ -2720,6 +2721,62 @@ void Player::InitAbilityPointsForLevel()
         {
             uint8 removeAmount = apCount - apLevel;
             DestroyItemCount(60000, removeAmount, true);
+        }
+        else
+            return;
+}
+
+void Player::InitPassivePointsForLevel()
+{
+    uint8 level = GetLevel();
+    uint8 ppCount = 0;
+    uint8 ppLevel = floor(level / 3);
+    uint8 currentPP = GetItemCount(60001);
+    uint8 trainedSpellCount = 0;
+
+    for (uint32 i = 0; i < sSkillLineAbilityStore.GetNumRows(); ++i)
+    {
+        SkillLineAbilityEntry const* spellInfo = sSkillLineAbilityStore.LookupEntry(i);
+
+        if (!spellInfo)
+            continue;
+
+        uint32 spellClassmaskInfo = spellInfo->ClassMask;
+
+        if (!spellClassmaskInfo)
+            continue;
+
+        if (GetClassMask() != spellClassmaskInfo)
+            continue;
+
+        uint32 createValue = spellInfo->TrivialSkillLineRankLow;
+        if (createValue == 2)
+            continue;
+
+        uint32 spellId = spellInfo->Spell;
+        SpellInfo const* _spellEntry = sSpellMgr->GetSpellInfo(spellId);
+        if (!_spellEntry)
+            continue;
+
+        if (!_spellEntry->HasAttribute(SPELL_ATTR0_PASSIVE))
+            continue;
+
+        if (HasSpell(spellId) && spellId)
+            ++trainedSpellCount;
+    }
+
+    ppCount = (trainedSpellCount * 2) + currentPP;
+    if (ppCount != ppLevel)
+        if (ppCount < ppLevel)
+        {
+            uint32 addAmount = ppLevel - ppCount;
+            AddItem(60001, addAmount);
+            //abilityPoint->SetCount(amount);
+        }
+        else if (ppCount > ppLevel)
+        {
+            uint8 removeAmount = ppCount - ppLevel;
+            DestroyItemCount(60001, removeAmount, true);
         }
         else
             return;
@@ -3948,9 +4005,15 @@ bool Player::ResetAbilities()
         if (!_spellEntry)
             continue;
 
-        // skip passive and hidden spells. will update function at later date to refund tp for passive spells.
-        if (_spellEntry->HasAttribute(SPELL_ATTR0_PASSIVE) || _spellEntry->HasAttribute(SPELL_ATTR0_HIDDEN_CLIENTSIDE))
-            continue;
+        // refund passive points if is a passive spell
+        if (_spellEntry->HasAttribute(SPELL_ATTR0_PASSIVE))
+            if (HasSpell(spellId) && spellId)
+            {
+                TC_LOG_INFO("server.worldserver", "Player::ResetAbilities: SpellID: %u\n", spellId);  // debug logging. remove at later point
+                RemoveSpell(spellId, false, false);
+                AddItem(60001, 2);                      // refund passive points
+                continue;
+            }
         
         // After all checks, we should only remove if there is an entry in skillineability.dbc,
         // if the entry has a classmask value that matches that of the player,
@@ -17865,6 +17928,7 @@ bool Player::LoadFromDB(ObjectGuid guid, CharacterDatabaseQueryHolder const& hol
     // after spell and quest load
     InitTalentForLevel();
     InitAbilityPointsForLevel();
+    InitPassivePointsForLevel();
     LearnDefaultSkills();
     LearnCustomSpells();
 

@@ -105,12 +105,25 @@ namespace Trainer
 
         player->ModifyMoney(-moneyCost);*/
 
-        if (player->GetItemCount(60000) < 2) // Have less than 2 ability points
-        {
-            SendTeachFailure(npc, player, spellId, FailReason::NotEnoughMoney);
-            player->GetSession()->SendNotification("You do not have enough Ability Points");
+        SpellInfo const* _spellEntry = sSpellMgr->GetSpellInfo(spellId);
+        if (!_spellEntry)
             return;
-        }
+        bool isPassive = _spellEntry->HasAttribute(SPELL_ATTR0_PASSIVE);
+
+        if (isPassive)
+            if (player->GetItemCount(60001) < 2) // Have less than 2 passive points
+            {
+                SendTeachFailure(npc, player, spellId, FailReason::NotEnoughMoney);
+                player->GetSession()->SendNotification("You do not have enough Passive Points");
+                return;
+            }
+        else
+            if (player->GetItemCount(60000) < 2) // Have less than 2 ability points
+            {
+                SendTeachFailure(npc, player, spellId, FailReason::NotEnoughMoney);
+                player->GetSession()->SendNotification("You do not have enough Ability Points");
+                return;
+            }
 
         npc->SendPlaySpellVisual(179);
         npc->SendPlaySpellImpact(player->GetGUID(), 362);
@@ -121,7 +134,10 @@ namespace Trainer
         else
             player->LearnSpell(trainerSpell->SpellId, false);
 
-        player->DestroyItemCount(60000, 2, true);
+        if (isPassive)
+            player->DestroyItemCount(60001, 2, true); // remove passive points after learning
+        else
+            player->DestroyItemCount(60000, 2, true); // remove ability points after learning
 
         // check to see which mastery aura the spell is associated with
         for (uint32 i = 0; i < sSkillLineAbilityStore.GetNumRows(); ++i)
