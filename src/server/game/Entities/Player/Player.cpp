@@ -571,6 +571,7 @@ bool Player::Create(ObjectGuid::LowType guidlow, CharacterCreateInfo* createInfo
     InitTaxiNodesForLevel();
     InitGlyphsForLevel();
     InitTalentForLevel();
+    InitTalentForLevel();
     InitPrimaryProfessions();                               // to max set before any spell added
 
     // apply original stats mods before spell loading or item equipment that call before equip _RemoveStatsMods()
@@ -2616,6 +2617,7 @@ void Player::GiveLevel(uint8 level)
     SetCreateMana(classInfo.basemana);
 
     InitTalentForLevel();
+    InitAbilityPointsForLevel();
     InitTaxiNodesForLevel();
     InitGlyphsForLevel();
 
@@ -2658,17 +2660,69 @@ void Player::GiveLevel(uint8 level)
     SendQuestGiverStatusMultiple();
 
     sScriptMgr->OnPlayerLevelChanged(this, oldLevel);
-
-    if (level > oldLevel) // Done to not result in int overflow for neg number when losing levels i.e. gm command
-        if (level % 2 == 0)
-            AddItem(60000, 1); // Add custom Ability Point Token on level up
-
 }
 
 
 bool Player::IsMaxLevel() const
 {
     return GetLevel() >= GetUInt32Value(PLAYER_FIELD_MAX_LEVEL);
+}
+
+void Player::InitAbilityPointsForLevel()
+{
+    uint8 level = GetLevel();
+    uint8 apCount = 0;
+    uint8 apLevel = floor(level / 2);
+    uint8 currentAP = GetItemCount(60000);
+    uint8 trainedSpellCount = 0;
+    // Item* abilityPoint = GetItemByEntry(60000);
+
+    for (uint32 i = 0; i < sSkillLineAbilityStore.GetNumRows(); ++i) 
+    {
+        SkillLineAbilityEntry const* spellInfo = sSkillLineAbilityStore.LookupEntry(i);
+
+        if (!spellInfo)
+            continue;
+
+        uint32 spellClassmaskInfo = spellInfo->ClassMask;
+
+        if (!spellClassmaskInfo)
+            continue;
+
+        if (GetClassMask() != spellClassmaskInfo)
+            continue;
+
+        uint32 createValue = spellInfo->TrivialSkillLineRankLow;
+        if (createValue == 2)
+            continue;
+
+        uint32 spellId = spellInfo->Spell;
+        SpellInfo const* _spellEntry = sSpellMgr->GetSpellInfo(spellId);
+        if (!_spellEntry)
+            continue;
+
+        if (_spellEntry->HasAttribute(SPELL_ATTR0_PASSIVE) || _spellEntry->HasAttribute(SPELL_ATTR0_HIDDEN_CLIENTSIDE))
+            continue;
+
+        if (HasSpell(spellId) && spellId)
+            ++trainedSpellCount;
+    }
+
+    apCount = (trainedSpellCount * 2) + currentAP;
+    if (apCount != apLevel)
+        if (apCount < apLevel)
+        {
+            uint32 addAmount = apLevel - apCount;
+            AddItem(60000, addAmount);
+            //abilityPoint->SetCount(amount);
+        }
+        else if (apCount > apLevel)
+        {
+            uint8 removeAmount = apCount - apLevel;
+            DestroyItemCount(60000, removeAmount, true);
+        }
+        else
+            return;
 }
 
 void Player::InitTalentForLevel()
@@ -17810,6 +17864,7 @@ bool Player::LoadFromDB(ObjectGuid guid, CharacterDatabaseQueryHolder const& hol
 
     // after spell and quest load
     InitTalentForLevel();
+    InitAbilityPointsForLevel();
     LearnDefaultSkills();
     LearnCustomSpells();
 
