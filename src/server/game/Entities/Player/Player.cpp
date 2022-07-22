@@ -2661,10 +2661,7 @@ void Player::GiveLevel(uint8 level)
 
     if (level > oldLevel) // Done to not result in int overflow for neg number when losing levels i.e. gm command
         if (level % 2 == 0)
-        {
-            uint8 apCount = (oldLevel - level) / 2;
-            AddItem(60000, apCount); // Add custom Ability Point Token on level up
-        }
+            AddItem(60000, 1); // Add custom Ability Point Token on level up
 
 }
 
