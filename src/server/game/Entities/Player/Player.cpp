@@ -3883,6 +3883,11 @@ bool Player::ResetAbilities()
         if (GetClassMask() != spellClassmaskInfo)
             continue;
 
+        // Do not unlearn spells which are learned on character create. These are things like racials and hidden auras which can still have matching class masks.
+        uint32 createValue = spellInfo->TrivialSkillLineRankLow;
+        if (createValue == 2)
+            continue;
+
         uint32 spellId = spellInfo->Spell; // define value for spell id in skillineability.dbc
         // confirm spell exists in spell.dbc
         SpellInfo const* _spellEntry = sSpellMgr->GetSpellInfo(spellId);
