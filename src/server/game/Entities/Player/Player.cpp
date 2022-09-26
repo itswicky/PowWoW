@@ -1992,8 +1992,6 @@ void Player::RegenerateAll()
     m_regenTimerCount += m_regenTimer;
     m_foodEmoteTimerCount += m_regenTimer;
 
-    TC_LOG_INFO("server.worldserver", "Player::Regenerate: reservationPercent: %u\n", "debug");  // debug logging. remove at later point
-
     Regenerate(POWER_ENERGY);
 
     Regenerate(POWER_MANA);
@@ -2069,6 +2067,36 @@ void Player::Regenerate(Powers power)
 
     float addvalue = 0.0f;
 
+    float reservationPercent = 0.0f;
+    AuraApplicationMap& myAuras = GetAppliedAuras();
+    for (AuraApplicationMap::iterator i = myAuras.begin(); i != myAuras.end(); i++)
+    {
+        SpellInfo const* spell = i->second->GetBase()->GetSpellInfo();
+        uint32 spellCost = spell->ManaCostPercentage;
+        if (spell->Attributes & 0x00000010 && spell->AttributesEx & 0x00020000 && spell->AttributesEx2 & 0x00000004 && spell->AttributesEx3 & 0x10000000) //AttributesEx2 & 4 && AttributesEx3 & 536870912 && AttributesEx & 131072 && Attributes & 16
+        {
+            reservationPercent += (spellCost / 100.0f);
+        }
+    }
+
+    float reservationAmount = maxValue * reservationPercent;
+    float availableMana = maxValue - reservationAmount;
+
+    // debug
+    if (power == POWER_MANA)
+        TC_LOG_INFO("server.worldserver", "Player::Regenerate: CurrentPower: %u MaxPower: %u ResPercent: %f ResAmount: %f Available: %f", addvalue, curValue, maxValue, reservationPercent, reservationAmount, availableMana);  // debug logging. remove at later point
+
+    if (power == POWER_MANA)
+        if (curValue >= availableMana)
+        {
+            if (HasUnitFlag2(UNIT_FLAG2_REGENERATE_POWER))
+                RemoveUnitFlag2(UNIT_FLAG2_REGENERATE_POWER);
+            return;
+        }
+        else
+            if (!HasUnitFlag2(UNIT_FLAG2_REGENERATE_POWER))
+                SetUnitFlag2(UNIT_FLAG2_REGENERATE_POWER);
+
     switch (power)
     {
         case POWER_MANA:
@@ -2123,22 +2151,6 @@ void Player::Regenerate(Powers power)
             addvalue += GetTotalAuraModifierByMiscValue(SPELL_AURA_MOD_POWER_REGEN, power) * ((power != POWER_ENERGY) ? m_regenTimerCount : m_regenTimer) / (5 * IN_MILLISECONDS);
     }
 
-    float reservationPercent = 0;
-    for (AuraApplicationMap::iterator i = m_appliedAuras.begin(); i != m_appliedAuras.end();)
-    {
-        SpellInfo const* spell = i->second->GetBase()->GetSpellInfo();
-        if (spell->Attributes & 0x00000010 && spell->AttributesEx & 0x00020000 && spell->AttributesEx2 & 0x00000004 && spell->AttributesEx3 & 0x20000000) //AttributesEx2 & 4 && AttributesEx3 & 536870912 && AttributesEx & 131072 && Attributes & 16
-        {
-            reservationPercent += (spell->ManaCostPercentage / 100.0f);
-            TC_LOG_INFO("server.worldserver", "Player::Regenerate: reservationPercent: %u\n", reservationPercent);  // debug logging. remove at later point
-        }            
-        else
-            ++i;
-    }
-
-    float reservationAmount = maxValue * reservationPercent;
-    TC_LOG_INFO("server.worldserver", "Player::Regenerate: reservationPercent: %u\n", reservationPercent);  // debug logging. remove at later point
-    GetSession()->SendNotification("Debug");
     if (addvalue < 0.0f)
     {
         if (curValue == 0)
@@ -2147,8 +2159,6 @@ void Player::Regenerate(Powers power)
     else if (addvalue > 0.0f)
     {
         if (curValue == maxValue)
-            return;
-        if (curValue >= (maxValue - reservationAmount))
             return;
     }
     else
