@@ -79,12 +79,12 @@ void Unit::UpdateDamagePhysical(WeaponAttackType attType)
             if (Player* player = this->ToPlayer())
                 if (player->HasAura(81001)) // Shield Superiority
                 {
-                    totalMin += player->GetEquippedShieldBaseBlockValue();
-                    totalMax += player->GetEquippedShieldBaseBlockValue() * 1.4;
+                    totalMin += player->GetEquippedShieldBaseBlockValue() * 1.5;
+                    totalMax += player->GetEquippedShieldBaseBlockValue() * 2;
                 }
 
             SetStatFloatValue(UNIT_FIELD_MINDAMAGE, totalMin);
-            SetStatFloatValue(UNIT_FIELD_MAXDAMAGE, totalMax);          
+            SetStatFloatValue(UNIT_FIELD_MAXDAMAGE, totalMax);
             break;
         case OFF_ATTACK:
             SetStatFloatValue(UNIT_FIELD_MINOFFHANDDAMAGE, totalMin);
@@ -503,6 +503,7 @@ void Player::UpdateAttackPowerAndDamage(bool ranged)
     }
     else
     {
+        UpdateShieldSuperiority();
         UpdateDamagePhysical(BASE_ATTACK);
         if (CanDualWield() && haveOffhandWeapon())           //allow update offhand damage only if player knows DualWield Spec and has equipped offhand weapon
             UpdateDamagePhysical(OFF_ATTACK);

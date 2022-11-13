@@ -7637,14 +7637,15 @@ void Player::_ApplyItemBonuses(ItemTemplate const* proto, uint8 slot, bool apply
 uint32 Player::GetEquippedShieldBaseBlockValue()
 {
     uint32 baseBV = 0;
-    Item* equippedShield = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND); // Check to see if shield is equipped *Note: Need additional check for shield and not other off-hand types
-    if (!equippedShield)
+    Item* offHand = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+    
+    if (!offHand || offHand->GetTemplate()->InventoryType != INVTYPE_SHIELD) // if no off-hand equipped or it is not a shield
     {
         TC_LOG_INFO("server.worldserver", "Player::GetEquippedShieldBaseBlockValue: Bonus block value from shield: %u", baseBV);
         return baseBV;
     }
-    ItemTemplate const* shieldEntry = equippedShield->GetTemplate(); // Grab entry for equipped shield so we can find block value
 
+    ItemTemplate const* shieldEntry = offHand->GetTemplate(); // Grab entry for equipped shield so we can find block value
     baseBV = shieldEntry->Block;
 
     TC_LOG_INFO("server.worldserver", "Player::GetEquippedShieldBaseBlockValue: Bonus block value from shield: %u", baseBV);
@@ -7653,24 +7654,25 @@ uint32 Player::GetEquippedShieldBaseBlockValue()
 
 void Player::UpdateShieldSuperiority()
 {
-    UpdateShieldBlockValue();
-    Item* equippedShield = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
-
     if (!HasAura(81000)) // Do nothing if player does not have Shield Superiority Dummy active/learned
         return;
 
+    Item* offHand = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+        
     if (Item* weapon = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND)) // If a main-hand item is equipped then remove the active aura
     {
         RemoveAura(81001);
         TC_LOG_INFO("server.worldserver", "Player::UpdateShieldSuperiority: Main-Hand equipped:");
     }
-    else if (!equippedShield)
+    else if (!offHand || offHand->GetTemplate()->InventoryType != INVTYPE_SHIELD) // if no off-hand equipped or it is not a shield
     {
         RemoveAura(81001);
-        TC_LOG_INFO("server.worldserver", "Player::UpdateShieldSuperiority: Off-Hand equipped:");
+        TC_LOG_INFO("server.worldserver", "Player::UpdateShieldSuperiority: Shield not equipped:");
     }
     else
         AddAura(81001, this);
+
+    UpdateShieldBlockValue();
 }
 
 void Player::_ApplyWeaponDamage(uint8 slot, ItemTemplate const* proto, bool apply)
@@ -7730,7 +7732,10 @@ void Player::_ApplyWeaponDamage(uint8 slot, ItemTemplate const* proto, bool appl
         return;
 
     if (CanModifyStats() && (GetWeaponDamageRange(attType, MAXDAMAGE) || proto->Delay))
+    {
+        UpdateShieldSuperiority();
         UpdateDamagePhysical(attType);
+    }
 }
 
 SpellSchoolMask Player::GetMeleeDamageSchoolMask(WeaponAttackType attackType /*= BASE_ATTACK*/, uint8 damageIndex /*= 0*/) const
@@ -12437,6 +12442,7 @@ void Player::RemoveItem(uint8 bag, uint8 slot, bool update)
                 {
                     CheckTitanGripPenalty();
                     UpdateShieldSuperiority();
+                    UpdateDamagePhysical(BASE_ATTACK);
                 }
             }
         }
