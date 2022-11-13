@@ -7654,6 +7654,7 @@ uint32 Player::GetEquippedShieldBaseBlockValue()
 void Player::UpdateShieldSuperiority()
 {
     UpdateShieldBlockValue();
+    Item* equippedShield = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
 
     if (!HasAura(81000)) // Do nothing if player does not have Shield Superiority Dummy active/learned
         return;
@@ -7663,7 +7664,7 @@ void Player::UpdateShieldSuperiority()
         RemoveAura(81001);
         TC_LOG_INFO("server.worldserver", "Player::UpdateShieldSuperiority: Main-Hand equipped:");
     }
-    else if (Item* equippedShield = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
+    else if (!equippedShield)
     {
         RemoveAura(81001);
         TC_LOG_INFO("server.worldserver", "Player::UpdateShieldSuperiority: Off-Hand equipped:");
