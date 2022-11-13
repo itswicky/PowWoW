@@ -5316,7 +5316,12 @@ float Player::GetTotalBaseModValue(BaseModGroup modGroup) const
 
 uint32 Player::GetShieldBlockValue() const
 {
+    AuraEffect const* shieldSuperiority = GetAuraEffect(81001, EFFECT_0);
     float value = std::max(0.f, (m_auraBaseFlatMod[SHIELD_BLOCK_VALUE] + GetStat(STAT_STRENGTH) * 0.5f - 10) * m_auraBasePctMod[SHIELD_BLOCK_VALUE]);
+
+    if (HasAura(81001))
+        value *= (1.f + (shieldSuperiority->GetAmount() / 100.f));
+
     return uint32(value);
 }
 
@@ -7627,6 +7632,30 @@ void Player::_ApplyItemBonuses(ItemTemplate const* proto, uint8 slot, bool apply
         if (feral_bonus)
             ApplyFeralAPBonus(feral_bonus, apply);
     }
+}
+
+uint32 Player::GetEquippedShieldBaseBlockValue()
+{
+    uint32 baseBV = 0;
+    Item* equippedShield = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND); // Check to see if shield is equipped
+    if (!equippedShield)
+        return baseBV;
+    ItemTemplate const* shieldEntry = equippedShield->GetTemplate(); // Grab entry for equipped shield so we can find block value
+
+    baseBV = shieldEntry->Block;
+
+    return baseBV;
+}
+
+void Player::UpdateShieldSuperiority()
+{
+    if (!HasAura(81000)) // Do nothing if player does not have Shield Superiority Dummy active/learned
+        return;
+
+    if (Item const* weapon = GetWeaponForAttack(BASE_ATTACK, true)) // If a main-hand weapon is equipped then remove the active aura
+        RemoveAura(81001);
+    else
+        AddAura(81001, this);
 }
 
 void Player::_ApplyWeaponDamage(uint8 slot, ItemTemplate const* proto, bool apply)
@@ -12188,7 +12217,10 @@ Item* Player::EquipItem(uint16 pos, Item* pItem, bool update)
          // update expertise and armor penetration - passive auras may need it
 
         if (slot == EQUIPMENT_SLOT_MAINHAND)
+        {
             UpdateExpertise(BASE_ATTACK);
+            UpdateShieldSuperiority;
+        }
 
         else if (slot == EQUIPMENT_SLOT_OFFHAND)
             UpdateExpertise(OFF_ATTACK);
@@ -12358,6 +12390,7 @@ void Player::RemoveItem(uint8 bag, uint8 slot, bool update)
                         }
 
                         UpdateExpertise(BASE_ATTACK);
+                        UpdateShieldSuperiority();
                     }
                     else if (slot == EQUIPMENT_SLOT_OFFHAND)
                         UpdateExpertise(OFF_ATTACK);
@@ -12505,7 +12538,10 @@ void Player::DestroyItem(uint8 bag, uint8 slot, bool update)
                 }
 
                 if (slot == EQUIPMENT_SLOT_MAINHAND)
+                {
                     UpdateExpertise(BASE_ATTACK);
+                    UpdateShieldSuperiority();
+                }
                 else if (slot == EQUIPMENT_SLOT_OFFHAND)
                     UpdateExpertise(OFF_ATTACK);
 

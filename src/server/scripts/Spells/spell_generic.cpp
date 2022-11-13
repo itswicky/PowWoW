@@ -4527,6 +4527,42 @@ class spell_gen_aura : public SpellScript
     }
 };
 
+class spell_gen_shield_sup : public AuraScript
+{
+    PrepareAuraScript(spell_gen_shield_sup);
+
+    void AfterApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        if (!caster)
+            return;
+
+        Item const* mainHand = caster->GetWeaponForAttack(BASE_ATTACK, true);
+        if (mainHand)
+            return;
+
+        caster->AddAura(81001, caster);
+    }
+
+    void AfterRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        if (!caster)
+            return;
+
+        if (!caster->HasAura(81001))
+            return;
+
+        caster->RemoveAura(81001);
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectApplyFn(spell_gen_shield_sup::AfterApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_gen_shield_sup::AfterRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_generic_spell_scripts()
 {
     RegisterSpellScript(spell_gen_absorb0_hitlimit1);
@@ -4668,4 +4704,5 @@ void AddSC_generic_spell_scripts()
     RegisterSpellScript(spell_gen_cannon_blast);
     RegisterSpellScript(spell_gen_submerged);
     RegisterSpellScript(spell_gen_aura);
+    RegisterSpellScript(spell_gen_shield_sup);
 }

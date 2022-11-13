@@ -1877,6 +1877,8 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         void ToggleMetaGemsActive(uint8 exceptslot, bool apply);
         void CorrectMetaGemEnchants(uint8 slot, bool apply);
         void InitDataForForm(bool reapplyMods = false);
+        uint32 GetEquippedShieldBaseBlockValue();
+        void Player::UpdateShieldSuperiority();
 
         void ApplyItemEquipSpell(Item* item, bool apply, bool form_change = false);
         void ApplyEquipSpell(SpellInfo const* spellInfo, Item* item, bool apply, bool form_change = false);
