@@ -7639,11 +7639,15 @@ uint32 Player::GetEquippedShieldBaseBlockValue()
     uint32 baseBV = 0;
     Item* equippedShield = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND); // Check to see if shield is equipped *Note: Need additional check for shield and not other off-hand types
     if (!equippedShield)
+    {
+        TC_LOG_INFO("server.worldserver", "Player::GetEquippedShieldBaseBlockValue: Bonus block value from shield: %u", baseBV);
         return baseBV;
+    }
     ItemTemplate const* shieldEntry = equippedShield->GetTemplate(); // Grab entry for equipped shield so we can find block value
 
     baseBV = shieldEntry->Block;
 
+    TC_LOG_INFO("server.worldserver", "Player::GetEquippedShieldBaseBlockValue: Bonus block value from shield: %u", baseBV);
     return baseBV;
 }
 
@@ -7655,9 +7659,15 @@ void Player::UpdateShieldSuperiority()
         return;
 
     if (Item* weapon = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND)) // If a main-hand item is equipped then remove the active aura
+    {
         RemoveAura(81001);
+        TC_LOG_INFO("server.worldserver", "Player::UpdateShieldSuperiority: Main-Hand equipped:");
+    }
     else if (Item* equippedShield = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
+    {
         RemoveAura(81001);
+        TC_LOG_INFO("server.worldserver", "Player::UpdateShieldSuperiority: Off-Hand equipped:");
+    }
     else
         AddAura(81001, this);
 }
