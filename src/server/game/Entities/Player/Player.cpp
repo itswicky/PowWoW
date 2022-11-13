@@ -12244,7 +12244,6 @@ Item* Player::EquipItem(uint16 pos, Item* pItem, bool update)
             case EQUIPMENT_SLOT_OFFHAND:
             case EQUIPMENT_SLOT_RANGED:
                 RecalculateRating(CR_ARMOR_PENETRATION);
-                UpdateShieldSuperiority();
                 break;
             default:
                 break;
@@ -12280,7 +12279,10 @@ Item* Player::EquipItem(uint16 pos, Item* pItem, bool update)
     }
 
     if (slot == EQUIPMENT_SLOT_MAINHAND || slot == EQUIPMENT_SLOT_OFFHAND)
+    {
         CheckTitanGripPenalty();
+        UpdateShieldSuperiority();
+    }
 
     // only for full equip instead adding to stack
     UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EQUIP_ITEM, pItem->GetEntry());
@@ -12306,7 +12308,10 @@ void Player::QuickEquipItem(uint16 pos, Item* pItem)
         }
 
         if (slot == EQUIPMENT_SLOT_MAINHAND || slot == EQUIPMENT_SLOT_OFFHAND)
+        {
             CheckTitanGripPenalty();
+            UpdateShieldSuperiority();
+        }
 
         UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EQUIP_ITEM, pItem->GetEntry());
         UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EQUIP_EPIC_ITEM, slot, pItem->GetEntry());
@@ -12414,7 +12419,6 @@ void Player::RemoveItem(uint8 bag, uint8 slot, bool update)
                         case EQUIPMENT_SLOT_OFFHAND:
                         case EQUIPMENT_SLOT_RANGED:
                             RecalculateRating(CR_ARMOR_PENETRATION);
-                            UpdateShieldSuperiority();
                             break;
                         default:
                             break;
@@ -12429,7 +12433,10 @@ void Player::RemoveItem(uint8 bag, uint8 slot, bool update)
             {
                 SetVisibleItemSlot(slot, nullptr);
                 if (slot == EQUIPMENT_SLOT_MAINHAND || slot == EQUIPMENT_SLOT_OFFHAND)
+                {
                     CheckTitanGripPenalty();
+                    UpdateShieldSuperiority();
+                }
             }
         }
         else if (Bag* pBag = GetBagByPos(bag))
@@ -12546,7 +12553,6 @@ void Player::DestroyItem(uint8 bag, uint8 slot, bool update)
                     case EQUIPMENT_SLOT_OFFHAND:
                     case EQUIPMENT_SLOT_RANGED:
                         RecalculateRating(CR_ARMOR_PENETRATION);
-                        UpdateShieldSuperiority();
                         break;
                     default:
                         break;
