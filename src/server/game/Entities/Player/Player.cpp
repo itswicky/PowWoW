@@ -12219,7 +12219,7 @@ Item* Player::EquipItem(uint16 pos, Item* pItem, bool update)
         if (slot == EQUIPMENT_SLOT_MAINHAND)
         {
             UpdateExpertise(BASE_ATTACK);
-            UpdateShieldSuperiority;
+            UpdateShieldSuperiority();
         }
 
         else if (slot == EQUIPMENT_SLOT_OFFHAND)
