@@ -7637,7 +7637,7 @@ void Player::_ApplyItemBonuses(ItemTemplate const* proto, uint8 slot, bool apply
 uint32 Player::GetEquippedShieldBaseBlockValue()
 {
     uint32 baseBV = 0;
-    Item* equippedShield = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND); // Check to see if shield is equipped
+    Item* equippedShield = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND); // Check to see if shield is equipped *Note: Need additional check for shield and not other off-hand types
     if (!equippedShield)
         return baseBV;
     ItemTemplate const* shieldEntry = equippedShield->GetTemplate(); // Grab entry for equipped shield so we can find block value
@@ -7649,10 +7649,14 @@ uint32 Player::GetEquippedShieldBaseBlockValue()
 
 void Player::UpdateShieldSuperiority()
 {
+    UpdateShieldBlockValue();
+
     if (!HasAura(81000)) // Do nothing if player does not have Shield Superiority Dummy active/learned
         return;
 
-    if (Item const* weapon = GetWeaponForAttack(BASE_ATTACK, true)) // If a main-hand weapon is equipped then remove the active aura
+    if (Item* weapon = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND)) // If a main-hand item is equipped then remove the active aura
+        RemoveAura(81001);
+    else if (Item* equippedShield = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
         RemoveAura(81001);
     else
         AddAura(81001, this);
@@ -12219,7 +12223,6 @@ Item* Player::EquipItem(uint16 pos, Item* pItem, bool update)
         if (slot == EQUIPMENT_SLOT_MAINHAND)
         {
             UpdateExpertise(BASE_ATTACK);
-            UpdateShieldSuperiority();
         }
 
         else if (slot == EQUIPMENT_SLOT_OFFHAND)
@@ -12231,6 +12234,7 @@ Item* Player::EquipItem(uint16 pos, Item* pItem, bool update)
             case EQUIPMENT_SLOT_OFFHAND:
             case EQUIPMENT_SLOT_RANGED:
                 RecalculateRating(CR_ARMOR_PENETRATION);
+                UpdateShieldSuperiority();
                 break;
             default:
                 break;
@@ -12390,7 +12394,6 @@ void Player::RemoveItem(uint8 bag, uint8 slot, bool update)
                         }
 
                         UpdateExpertise(BASE_ATTACK);
-                        UpdateShieldSuperiority();
                     }
                     else if (slot == EQUIPMENT_SLOT_OFFHAND)
                         UpdateExpertise(OFF_ATTACK);
@@ -12401,6 +12404,7 @@ void Player::RemoveItem(uint8 bag, uint8 slot, bool update)
                         case EQUIPMENT_SLOT_OFFHAND:
                         case EQUIPMENT_SLOT_RANGED:
                             RecalculateRating(CR_ARMOR_PENETRATION);
+                            UpdateShieldSuperiority();
                             break;
                         default:
                             break;
@@ -12532,6 +12536,7 @@ void Player::DestroyItem(uint8 bag, uint8 slot, bool update)
                     case EQUIPMENT_SLOT_OFFHAND:
                     case EQUIPMENT_SLOT_RANGED:
                         RecalculateRating(CR_ARMOR_PENETRATION);
+                        UpdateShieldSuperiority();
                         break;
                     default:
                         break;
@@ -12540,7 +12545,6 @@ void Player::DestroyItem(uint8 bag, uint8 slot, bool update)
                 if (slot == EQUIPMENT_SLOT_MAINHAND)
                 {
                     UpdateExpertise(BASE_ATTACK);
-                    UpdateShieldSuperiority();
                 }
                 else if (slot == EQUIPMENT_SLOT_OFFHAND)
                     UpdateExpertise(OFF_ATTACK);
