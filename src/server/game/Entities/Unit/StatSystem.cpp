@@ -61,8 +61,6 @@ void Unit::UpdateAllResistances()
 
 void Unit::UpdateDamagePhysical(WeaponAttackType attType)
 {
-    Player* player = this->ToPlayer();
-    
     float totalMin = 0.f;
     float totalMax = 0.f;
 
@@ -78,12 +76,12 @@ void Unit::UpdateDamagePhysical(WeaponAttackType attType)
     {
         case BASE_ATTACK:
         default:
-
-            if (player->HasAura(81001)) // Shield Superiority
-            {
-                totalMin += player->GetEquippedShieldBaseBlockValue();
-                totalMax += player->GetEquippedShieldBaseBlockValue() * 1.4;
-            }
+            if (Player* player = this->ToPlayer())
+                if (player->HasAura(81001)) // Shield Superiority
+                {
+                    totalMin += player->GetEquippedShieldBaseBlockValue();
+                    totalMax += player->GetEquippedShieldBaseBlockValue() * 1.4;
+                }
 
             SetStatFloatValue(UNIT_FIELD_MINDAMAGE, totalMin);
             SetStatFloatValue(UNIT_FIELD_MAXDAMAGE, totalMax);          
