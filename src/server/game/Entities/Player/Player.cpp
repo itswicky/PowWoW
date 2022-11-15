@@ -7657,6 +7657,7 @@ void Player::UpdateShieldSuperiority()
     if (!HasAura(81000)) // Do nothing if player does not have Shield Superiority Dummy active/learned
         return;
 
+    uint32 baseBV = GetEquippedShieldBaseBlockValue();
     Item* offHand = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
         
     if (Item* weapon = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND)) // If a main-hand item is equipped then remove the active aura
@@ -7670,7 +7671,15 @@ void Player::UpdateShieldSuperiority()
         TC_LOG_INFO("server.worldserver", "Player::UpdateShieldSuperiority: Shield not equipped:");
     }
     else
-        AddAura(81001, this);
+    {
+        if (!HasAura(81001))
+            AddAura(81001, this);
+
+        SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, baseBV * 1.25);
+        SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, baseBV * 1.55);
+        UpdateDamagePhysical(BASE_ATTACK);
+        TC_LOG_INFO("server.worldserver", "Player::UpdateShieldSuperiority: Aura applied");
+    }
 
     UpdateShieldBlockValue();
 }
@@ -7733,7 +7742,6 @@ void Player::_ApplyWeaponDamage(uint8 slot, ItemTemplate const* proto, bool appl
 
     if (CanModifyStats() && (GetWeaponDamageRange(attType, MAXDAMAGE) || proto->Delay))
     {
-        UpdateShieldSuperiority();
         UpdateDamagePhysical(attType);
     }
 }

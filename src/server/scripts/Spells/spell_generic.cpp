@@ -35,7 +35,8 @@
 #include "Log.h"
 #include "MotionMaster.h"
 #include "ObjectMgr.h"
-#include "Pet.h"
+#include "Pet.cpp"
+#include "Player.h"
 #include "ReputationMgr.h"
 #include "SkillDiscovery.h"
 #include "SpellAuraEffects.h"
@@ -4527,9 +4528,9 @@ class spell_gen_aura : public SpellScript
     }
 };
 
-class spell_gen_shield_sup : public AuraScript
+class spell_gen_shield_sup_dummy : public AuraScript
 {
-    PrepareAuraScript(spell_gen_shield_sup);
+    PrepareAuraScript(spell_gen_shield_sup_dummy);
 
     void AfterApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
@@ -4541,6 +4542,10 @@ class spell_gen_shield_sup : public AuraScript
         if (mainHand)
             return;
 
+        Item* offHand = caster->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+        if (!offHand || offHand->GetTemplate()->InventoryType != INVTYPE_SHIELD)
+            return;
+
         caster->AddAura(81001, caster);
     }
 
@@ -4550,10 +4555,43 @@ class spell_gen_shield_sup : public AuraScript
         if (!caster)
             return;
 
-        if (!caster->HasAura(81001))
+        caster->RemoveAura(81001);
+        caster->UpdateShieldBlockValue();
+        caster->UpdateDamagePhysical(BASE_ATTACK);
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectApplyFn(spell_gen_shield_sup_dummy::AfterApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_gen_shield_sup_dummy::AfterRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_gen_shield_sup : public AuraScript
+{
+    PrepareAuraScript(spell_gen_shield_sup);
+
+    void AfterApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        if (!caster)
             return;
 
-        caster->RemoveAura(81001);
+        caster->UpdateShieldSuperiority();
+    }
+
+    void AfterRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        if (!caster)
+            return;
+
+        Item const* mainHand = caster->GetWeaponForAttack(BASE_ATTACK, true);
+        if (!mainHand)
+        {
+            caster->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, BASE_MINDAMAGE);
+            caster->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, BASE_MAXDAMAGE);
+        }        
     }
 
     void Register() override
@@ -4704,5 +4742,6 @@ void AddSC_generic_spell_scripts()
     RegisterSpellScript(spell_gen_cannon_blast);
     RegisterSpellScript(spell_gen_submerged);
     RegisterSpellScript(spell_gen_aura);
+    RegisterSpellScript(spell_gen_shield_sup_dummy);
     RegisterSpellScript(spell_gen_shield_sup);
 }
