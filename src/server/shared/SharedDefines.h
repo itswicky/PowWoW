@@ -1537,6 +1537,7 @@ enum Targets
     TARGET_UNK_DEST_AREA_UNK_107       = 107, // not enough info - only generic spells avalible
     TARGET_GAMEOBJECT_CONE             = 108,
     TARGET_UNIT_CONE_ENTRY_110         = 110, // 1 spell
+    TARGET_SRC_ENEMY                   = 111,
     TOTAL_SPELL_TARGETS
 };
 
