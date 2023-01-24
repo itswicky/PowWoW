@@ -134,7 +134,7 @@ class spell_firebrand_weapon : public AuraScript
         int32 bp = GetEffectInfo(EFFECT_0).CalcValue();
         CastSpellExtraArgs args(aurEff);
         args.AddSpellBP0(damageInfo->GetDamage() * bp / 100);
-        caster->CastSpell(damageInfo->GetVictim(), 93006, args);
+        caster->CastSpell(damageInfo->GetVictim(), 93020, args);
     }
 
     void Register() override
@@ -159,7 +159,7 @@ class spell_combustibolt : public AuraScript
         int32 bp = GetEffectInfo(EFFECT_0).CalcValue();
         CastSpellExtraArgs args(aurEff);
         args.AddSpellBP0(damageInfo->GetDamage() * bp / 100);
-        caster->CastSpell(damageInfo->GetVictim(), 93014, args);
+        caster->CastSpell(damageInfo->GetVictim(), 93028, args);
     }
 
     void Register() override
@@ -184,7 +184,7 @@ class spell_soothing_flame : public AuraScript
         int32 bp = GetEffectInfo(EFFECT_0).CalcValue();
         CastSpellExtraArgs args(aurEff);
         args.AddSpellBP0(healInfo->GetHeal() * bp / 300);
-        caster->CastSpell(healInfo->GetTarget(), 93017, args);
+        caster->CastSpell(healInfo->GetTarget(), 93031, args);
     }
 
     void Register() override

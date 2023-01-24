@@ -348,7 +348,7 @@ void Spell::EffectSchoolDMG()
                 }
 
                 // Burning Armor
-                if (m_spellInfo->Id == 93010)
+                if (m_spellInfo->Id == 93024)
                 {
                     uint32 armor = unitCaster->GetArmor();
                     damage += int32(armor * 0.004f);
