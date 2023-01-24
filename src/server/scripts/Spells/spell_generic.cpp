@@ -4601,6 +4601,56 @@ class spell_gen_shield_sup : public AuraScript
     }
 };
 
+class spell_firebrand_weapon : public AuraScript
+{
+    PrepareAuraScript(spell_firebrand_weapon);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+        Unit* caster = eventInfo.GetActor();
+
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+        if (!damageInfo || !damageInfo->GetDamage() || !damageInfo->GetVictim())
+            return;
+
+        int32 bp = GetEffectInfo(EFFECT_0).CalcValue();
+        CastSpellExtraArgs args(aurEff);
+        args.AddSpellBP0(damageInfo->GetDamage() * bp / 100);
+        caster->CastSpell(damageInfo->GetVictim(), 93006, args);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_firebrand_weapon::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_combustibolt : public AuraScript
+{
+    PrepareAuraScript(spell_combustibolt);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+        Unit* caster = eventInfo.GetActor();
+
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+        if (!damageInfo || !damageInfo->GetDamage() || !damageInfo->GetVictim())
+            return;
+
+        int32 bp = GetEffectInfo(EFFECT_0).CalcValue();
+        CastSpellExtraArgs args(aurEff);
+        args.AddSpellBP0(damageInfo->GetDamage() * bp / 100);
+        caster->CastSpell(damageInfo->GetVictim(), 93014, args);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_combustibolt::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_generic_spell_scripts()
 {
     RegisterSpellScript(spell_gen_absorb0_hitlimit1);
@@ -4744,4 +4794,6 @@ void AddSC_generic_spell_scripts()
     RegisterSpellScript(spell_gen_aura);
     RegisterSpellScript(spell_gen_shield_sup_dummy);
     RegisterSpellScript(spell_gen_shield_sup);
+    RegisterSpellScript(spell_firebrand_weapon);
+    RegisterSpellScript(spell_combustibolt);
 }
