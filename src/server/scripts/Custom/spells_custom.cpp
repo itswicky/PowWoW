@@ -193,6 +193,54 @@ class spell_soothing_flame : public AuraScript
     }
 };
 
+class spell_burnout : public AuraScript
+{
+    PrepareAuraScript(spell_burnout);
+
+    uint32 _absorbPct = 0;
+    uint32 _dot = 0;
+
+    enum Spell
+    {
+        BURNOUT_DOT = 93038
+    };
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo({ BURNOUT_DOT });
+    }
+
+    bool Load() override
+    {
+        _absorbPct = GetEffectInfo(EFFECT_1).CalcValue();
+        _dot = GetEffectInfo(EFFECT_0).CalcValue();
+        return GetUnitOwner()->GetTypeId() == TYPEID_PLAYER;
+    }
+
+    void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        // Set absorbtion amount to unlimited
+        amount = -1;
+    }
+
+    void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
+    {
+        Unit* victim = GetTarget();
+        int32 dmg = dmgInfo.GetDamage();
+
+        absorbAmount = CalculatePct(dmg, _absorbPct);
+        CastSpellExtraArgs args(aurEff);
+        args.AddSpellBP0(dmg * _dot / 400);
+        victim->CastSpell(victim, BURNOUT_DOT, args);
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_burnout::CalculateAmount, EFFECT_1, SPELL_AURA_SCHOOL_ABSORB);
+        OnEffectAbsorb += AuraEffectAbsorbFn(spell_burnout::Absorb, EFFECT_1);
+    }
+};
+
 void AddSC_Spells_Custom_()
 {
     RegisterSpellScript(spell_gen_aura);
@@ -201,4 +249,5 @@ void AddSC_Spells_Custom_()
     RegisterSpellScript(spell_firebrand_weapon);
     RegisterSpellScript(spell_combustibolt);
     RegisterSpellScript(spell_soothing_flame);
+    RegisterSpellScript(spell_burnout);
 }
