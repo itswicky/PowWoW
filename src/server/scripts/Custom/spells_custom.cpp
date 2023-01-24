@@ -183,7 +183,7 @@ class spell_soothing_flame : public AuraScript
 
         int32 bp = GetEffectInfo(EFFECT_0).CalcValue();
         CastSpellExtraArgs args(aurEff);
-        args.AddSpellBP0(healInfo->GetHeal() * bp / 100);
+        args.AddSpellBP0(healInfo->GetHeal() * bp / 300);
         caster->CastSpell(healInfo->GetTarget(), 93017, args);
     }
 
