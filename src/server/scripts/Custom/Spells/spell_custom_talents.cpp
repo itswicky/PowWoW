@@ -1877,6 +1877,129 @@ public:
     }
 };
 
+class spell_gen_shield_sup_dummy : public AuraScript
+{
+    PrepareAuraScript(spell_gen_shield_sup_dummy);
+
+    void AfterApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        if (!caster)
+            return;
+
+        Item const* mainHand = caster->GetWeaponForAttack(BASE_ATTACK, true);
+        if (mainHand)
+            return;
+
+        Item* offHand = caster->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+        if (!offHand || offHand->GetTemplate()->InventoryType != INVTYPE_SHIELD)
+            return;
+
+        caster->AddAura(81001, caster);
+    }
+
+    void AfterRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        if (!caster)
+            return;
+
+        caster->RemoveAura(81001);
+        caster->UpdateShieldBlockValue();
+        caster->UpdateDamagePhysical(BASE_ATTACK);
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectApplyFn(spell_gen_shield_sup_dummy::AfterApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_gen_shield_sup_dummy::AfterRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_gen_shield_sup : public AuraScript
+{
+    PrepareAuraScript(spell_gen_shield_sup);
+
+    void AfterApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        if (!caster)
+            return;
+
+        caster->UpdateShieldSuperiority();
+    }
+
+    void AfterRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        if (!caster)
+            return;
+
+        Item const* mainHand = caster->GetWeaponForAttack(BASE_ATTACK, true);
+        if (!mainHand)
+        {
+            caster->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, BASE_MINDAMAGE);
+            caster->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, BASE_MAXDAMAGE);
+        }
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectApplyFn(spell_gen_shield_sup::AfterApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_gen_shield_sup::AfterRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+class spell_firebrand_weapon : public AuraScript
+{
+    PrepareAuraScript(spell_firebrand_weapon);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+        Unit* caster = eventInfo.GetActor();
+
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+        if (!damageInfo || !damageInfo->GetDamage() || !damageInfo->GetVictim())
+            return;
+
+        int32 bp = GetEffectInfo(EFFECT_0).CalcValue();
+        CastSpellExtraArgs args(aurEff);
+        args.AddSpellBP0(damageInfo->GetDamage() * bp / 100);
+        caster->CastSpell(damageInfo->GetVictim(), 93006, args);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_firebrand_weapon::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+class spell_combustibolt : public AuraScript
+{
+    PrepareAuraScript(spell_combustibolt);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+        Unit* caster = eventInfo.GetActor();
+
+        DamageInfo* damageInfo = eventInfo.GetDamageInfo();
+        if (!damageInfo || !damageInfo->GetDamage() || !damageInfo->GetVictim())
+            return;
+
+        int32 bp = GetEffectInfo(EFFECT_0).CalcValue();
+        CastSpellExtraArgs args(aurEff);
+        args.AddSpellBP0(damageInfo->GetDamage() * bp / 100);
+        caster->CastSpell(damageInfo->GetVictim(), 93014, args);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_combustibolt::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 
 void AddSC_Spells_Custom_Talents()
 {
@@ -1930,4 +2053,8 @@ void AddSC_Spells_Custom_Talents()
     new hot_shield_supperiosity();
     new hot_fists_of_fury();
     new hot_wild_quiver();
+    RegisterSpellScript(spell_gen_shield_sup_dummy);
+    RegisterSpellScript(spell_gen_shield_sup);
+    RegisterSpellScript(spell_firebrand_weapon);
+    RegisterSpellScript(spell_combustibolt);
 }
