@@ -168,6 +168,30 @@ class spell_combustibolt : public AuraScript
     }
 };
 
+class spell_soothing_flame : public AuraScript
+{
+    PrepareAuraScript(spell_soothing_flame);
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+        Unit* caster = eventInfo.GetActor();
+
+        HealInfo* healInfo = eventInfo.GetHealInfo();
+        if (!healInfo || !healInfo->GetHeal() || !healInfo->GetTarget())
+            return;
+
+        int32 bp = GetEffectInfo(EFFECT_0).CalcValue();
+        CastSpellExtraArgs args(aurEff);
+        args.AddSpellBP0(healInfo->GetHeal() * bp / 100);
+        caster->CastSpell(healInfo->GetTarget(), 93017, args);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_soothing_flame::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
 
 void AddSC_Spells_Custom_()
 {
@@ -176,4 +200,5 @@ void AddSC_Spells_Custom_()
     RegisterSpellScript(spell_gen_shield_sup);
     RegisterSpellScript(spell_firebrand_weapon);
     RegisterSpellScript(spell_combustibolt);
+    RegisterSpellScript(spell_soothing_flame);
 }
