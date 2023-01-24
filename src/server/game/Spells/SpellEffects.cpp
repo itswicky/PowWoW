@@ -351,7 +351,7 @@ void Spell::EffectSchoolDMG()
                 if (m_spellInfo->Id == 93024)
                 {
                     uint32 armor = unitCaster->GetArmor();
-                    damage += int32(armor * 0.004f);
+                    damage += int32(armor * 0.003f);
                 }
 
                 break;
