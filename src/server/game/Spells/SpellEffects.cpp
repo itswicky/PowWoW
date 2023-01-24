@@ -347,6 +347,13 @@ void Spell::EffectSchoolDMG()
                         damage /= count;
                 }
 
+                // Burning Armor
+                if (m_spellInfo->Id == 93009)
+                {
+                    uint32 armor = unitCaster->GetArmor();
+                    damage += int32(armor * 0.004f);
+                }
+
                 break;
             }
             case SPELLFAMILY_WARRIOR:
