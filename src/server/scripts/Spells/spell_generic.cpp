@@ -4490,44 +4490,6 @@ class spell_gen_submerged : public SpellScript
     }
 };
 
-class spell_gen_aura : public SpellScript
-{
-    PrepareSpellScript(spell_gen_aura);
-
-    SpellCastResult CheckRequirement()
-    {
-        Unit* caster = GetCaster();
-        uint32 manaPercent = GetSpellInfo()->ManaCostPercentage;
-        uint32 maxMana = caster->GetMaxPower(POWER_MANA);
-        uint32 curMana = caster->GetPower(POWER_MANA);
-        float percentCost = manaPercent / 100.0f;
-
-        if (curMana < (percentCost * maxMana))
-            return SPELL_FAILED_NO_POWER;
-        else
-            return SPELL_CAST_OK;
-    }
-
-    void HandleDummy(SpellEffIndex /*effIndex*/)
-    {
-        Unit* caster = GetCaster();
-        uint32 manaPercent = GetSpellInfo()->ManaCostPercentage;
-        uint32 maxMana = caster->GetMaxPower(POWER_MANA);
-        uint32 baseCost = GetSpellInfo()->CalcPowerCost(caster, GetSpellInfo()->GetSchoolMask());
-        float percentCost = manaPercent / 100.0f;
-        float manaCostPercent = percentCost * maxMana;
-        int32 remainder = manaCostPercent - baseCost;
-
-        caster->ModifyPower(POWER_MANA, -remainder);
-    }
-
-    void Register() override
-    {
-        OnCheckCast += SpellCheckCastFn(spell_gen_aura::CheckRequirement);
-        OnEffectLaunch += SpellEffectFn(spell_gen_aura::HandleDummy, EFFECT_1, SPELL_EFFECT_DUMMY);
-    }
-};
-
 void AddSC_generic_spell_scripts()
 {
     RegisterSpellScript(spell_gen_absorb0_hitlimit1);
@@ -4668,5 +4630,4 @@ void AddSC_generic_spell_scripts()
     RegisterSpellScript(spell_gen_charmed_unit_spell_cooldown);
     RegisterSpellScript(spell_gen_cannon_blast);
     RegisterSpellScript(spell_gen_submerged);
-    RegisterSpellScript(spell_gen_aura);
 }
