@@ -1162,8 +1162,7 @@ void ScriptMgr::FillSpellSummary()
             if (spellEffectInfo.TargetA.GetTarget() == TARGET_UNIT_SRC_AREA_ENEMY ||
                 spellEffectInfo.TargetA.GetTarget() == TARGET_UNIT_DEST_AREA_ENEMY ||
                 spellEffectInfo.TargetA.GetTarget() == TARGET_SRC_CASTER ||
-                spellEffectInfo.TargetA.GetTarget() == TARGET_DEST_DYNOBJ_ENEMY ||
-                spellEffectInfo.TargetA.GetTarget() == TARGET_SRC_ENEMY)
+                spellEffectInfo.TargetA.GetTarget() == TARGET_DEST_DYNOBJ_ENEMY)
                 SpellSummary[i].Targets |= 1 << (SELECT_TARGET_AOE_ENEMY-1);
 
             // Spell targets an enemy.
@@ -1172,8 +1171,7 @@ void ScriptMgr::FillSpellSummary()
                 spellEffectInfo.TargetA.GetTarget() == TARGET_UNIT_SRC_AREA_ENEMY ||
                 spellEffectInfo.TargetA.GetTarget() == TARGET_UNIT_DEST_AREA_ENEMY ||
                 spellEffectInfo.TargetA.GetTarget() == TARGET_SRC_CASTER ||
-                spellEffectInfo.TargetA.GetTarget() == TARGET_DEST_DYNOBJ_ENEMY ||
-                spellEffectInfo.TargetA.GetTarget() == TARGET_SRC_ENEMY)
+                spellEffectInfo.TargetA.GetTarget() == TARGET_DEST_DYNOBJ_ENEMY)
                 SpellSummary[i].Targets |= 1 << (SELECT_TARGET_ANY_ENEMY-1);
 
             // Spell targets a single friend (or self).
