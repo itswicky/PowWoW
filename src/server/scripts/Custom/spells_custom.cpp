@@ -225,12 +225,41 @@ class spell_burnout : public AuraScript
 
     void Absorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
     {
-        Unit* victim = GetTarget();
+        SpellInfo const* spellInfo = dmgInfo.GetSpellInfo();
         int32 dmg = dmgInfo.GetDamage();
 
-        absorbAmount = CalculatePct(dmg, _absorbPct);
+        if(!spellInfo)
+            absorbAmount = CalculatePct(dmg, _absorbPct);
+        else if (spellInfo->Id == BURNOUT_DOT) // Do not proc off self)
+            absorbAmount = 0;
+        else
+            absorbAmount = CalculatePct(dmg, _absorbPct);
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        SpellInfo const* spellInfo = eventInfo.GetSpellInfo();
+
+        if(!spellInfo)
+            return eventInfo.GetDamageInfo() && eventInfo.GetProcTarget();
+        else if (spellInfo->Id == BURNOUT_DOT) // Do not proc off self)
+            return false;
+        else
+            return eventInfo.GetDamageInfo() && eventInfo.GetProcTarget();
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+
+        Unit* victim = GetTarget();
+        SpellInfo const* burnoutDot = sSpellMgr->AssertSpellInfo(BURNOUT_DOT);
+
+        ASSERT(burnoutDot->GetMaxTicks() > 0);
+        int32 amount = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), _dot) / burnoutDot->GetMaxTicks());
+
         CastSpellExtraArgs args(aurEff);
-        args.AddSpellBP0(dmg * _dot / 400);
+        args.AddSpellBP0(amount);
         victim->CastSpell(victim, BURNOUT_DOT, args);
     }
 
@@ -238,6 +267,8 @@ class spell_burnout : public AuraScript
     {
         DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_burnout::CalculateAmount, EFFECT_1, SPELL_AURA_SCHOOL_ABSORB);
         OnEffectAbsorb += AuraEffectAbsorbFn(spell_burnout::Absorb, EFFECT_1);
+        DoCheckProc += AuraCheckProcFn(spell_burnout::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_burnout::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
