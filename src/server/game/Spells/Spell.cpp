@@ -6467,9 +6467,18 @@ std::pair<float, float> Spell::GetMinMaxRange(bool strict) const
         Unit* target = m_targets.GetUnitTarget();
         if (m_spellInfo->RangeEntry->Flags & SPELL_RANGE_MELEE)
         {
+            Player* p = unitCaster->ToPlayer();
             // when the target is not a unit, take the caster's combat reach as the target's combat reach.
             if (unitCaster)
                 rangeMod = unitCaster->GetMeleeRange(target ? target : unitCaster);
+            if (p)
+                if (p->IsPlayer())
+                    if (Item* weapon = p->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND))
+                        if (ItemTemplate const* mhWeaponProto = weapon->GetTemplate())
+                            if (mhWeaponProto->SubClass == ITEM_SUBCLASS_WEAPON_POLEARM && p->HasAura(93056))
+                            {;
+                                rangeMod += 3.0f;
+                            }
         }
         else
         {
