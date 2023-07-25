@@ -584,6 +584,7 @@ bool Player::Create(ObjectGuid::LowType guidlow, CharacterCreateInfo* createInfo
     // original spells
     LearnDefaultSkills();
     LearnCustomSpells();
+    LearnCreateSpells();
     LearnLevelupSpells();
 
     // original action bar
@@ -23028,6 +23029,13 @@ void Player::LearnCustomSpells()
         else                                                // but send in normal spell in game learn case
             LearnSpell(tspell, true);
     }
+}
+
+void Player::LearnCreateSpells()
+{
+    // Temporary hack until figuring out where character spells are learned on initial creation
+    if(!HasSpell(81000))
+        LearnSpell(81000, true);
 }
 
 void Player::LearnLevelupSpells()
