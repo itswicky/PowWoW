@@ -584,6 +584,7 @@ bool Player::Create(ObjectGuid::LowType guidlow, CharacterCreateInfo* createInfo
     // original spells
     LearnDefaultSkills();
     LearnCustomSpells();
+    AddAura(81000,this);    // Scaling XP aura
 
     // original action bar
     for (PlayerCreateInfoActions::const_iterator action_itr = info->action.begin(); action_itr != info->action.end(); ++action_itr)
