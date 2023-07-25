@@ -584,6 +584,7 @@ bool Player::Create(ObjectGuid::LowType guidlow, CharacterCreateInfo* createInfo
     // original spells
     LearnDefaultSkills();
     LearnCustomSpells();
+    LearnLevelupSpells();
 
     // original action bar
     for (PlayerCreateInfoActions::const_iterator action_itr = info->action.begin(); action_itr != info->action.end(); ++action_itr)
@@ -2625,6 +2626,7 @@ void Player::GiveLevel(uint8 level)
     InitTalentForLevel();
     InitTaxiNodesForLevel();
     InitGlyphsForLevel();
+    LearnLevelupSpells();
 
     UpdateAllStats();
 
@@ -17756,6 +17758,7 @@ bool Player::LoadFromDB(ObjectGuid guid, CharacterDatabaseQueryHolder const& hol
     InitTalentForLevel();
     LearnDefaultSkills();
     LearnCustomSpells();
+    LearnLevelupSpells();
 
     // must be before inventory (some items required reputation check)
     m_reputationMgr->LoadFromDB(holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_REPUTATION));
@@ -23004,6 +23007,7 @@ void Player::ResetSpells(bool myClassOnly)
     LearnDefaultSkills();
     LearnCustomSpells();
     LearnQuestRewardedSpells();
+    LearnLevelupSpells();
 }
 
 void Player::LearnCustomSpells()
@@ -23023,6 +23027,36 @@ void Player::LearnCustomSpells()
             AddSpell(tspell, true, true, true, false);
         else                                                // but send in normal spell in game learn case
             LearnSpell(tspell, true);
+    }
+}
+
+void Player::LearnLevelupSpells()
+{
+    PlayerInfo const* info = sObjectMgr->GetPlayerInfo(GetRace(), GetClass());
+    ASSERT(info);
+    for (PlayerLevelupSpells::const_iterator itr = info->levelupSpells.begin(); itr != info->levelupSpells.end(); ++itr)
+    {
+        uint32 spell = itr->Spell;
+        uint32 slevel = itr->level;
+        uint32 plevel = GetLevel();
+
+        if ((plevel < slevel) && HasSpell(spell))
+            RemoveSpell(spell, false, false);
+
+        // if we are not yet high enough level, ignore
+        if (plevel < slevel)
+            continue;
+
+        // if we already know spell, ignore
+        if (HasSpell(spell))
+            continue;
+
+        TC_LOG_DEBUG("entities.player.loading", "Player::LearnLevelupSpells: Player '%s' (%s, Class: %u Race: %u): Adding levelup spell (SpellID: %u)",
+            GetName().c_str(), GetGUID().ToString().c_str(), uint32(GetClass()), uint32(GetRace()), spell);
+        if (!IsInWorld())                                    // will send in INITIAL_SPELLS in list anyway at map add
+            AddSpell(spell, true, true, true, false);
+        else                                                // but send in normal spell in game learn case
+            LearnSpell(spell, true);
     }
 }
 

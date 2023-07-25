@@ -685,6 +685,14 @@ struct PlayerCreateInfoSkill
 
 typedef std::vector<PlayerCreateInfoSkill> PlayerCreateInfoSkills;
 
+struct PlayerLevelupSpell
+{
+    uint8 level;
+    uint16 Spell;
+};
+
+typedef std::vector<PlayerLevelupSpell> PlayerLevelupSpells;
+
 // existence checked by displayId != 0
 struct PlayerInfo
 {
@@ -701,6 +709,7 @@ struct PlayerInfo
     PlayerCreateInfoSpells castSpells;
     PlayerCreateInfoActions action;
     PlayerCreateInfoSkills skills;
+    PlayerLevelupSpells levelupSpells;
 
     //[level-1] 0..MaxPlayerLevel-1
     std::unique_ptr<PlayerLevelInfo[]> levelInfo;
