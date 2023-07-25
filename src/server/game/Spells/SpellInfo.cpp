@@ -416,8 +416,10 @@ int32 SpellEffectInfo::CalcValue(WorldObject const* caster /*= nullptr*/, int32 
 
         // if base level is greater than spell level, reduce by base level (eg. pilgrims foods)
         level -= int32(std::max(_spellInfo->BaseLevel, _spellInfo->SpellLevel));
-        //basePoints += int32(level * basePointsPerLevel);
-        basePoints += int32(level * (basePointsPerLevel / (60 / level)));
+        if (Effect == SPELL_EFFECT_SCHOOL_DAMAGE || Effect == SPELL_EFFECT_HEAL)
+            basePoints += int32(level * (basePointsPerLevel / (60 / level)));
+        else
+            basePoints += int32(level * basePointsPerLevel);
     }
 
     // roll in a range <1;EffectDieSides> as of patch 3.3.3
