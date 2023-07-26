@@ -23035,7 +23035,7 @@ void Player::LearnCreateSpells()
 {
     // Temporary hack until figuring out where character spells are learned on initial creation
     if(!HasSpell(81000))
-        LearnSpell(81000, true);
+        LearnSpell(81000, false);
 }
 
 void Player::LearnLevelupSpells()
