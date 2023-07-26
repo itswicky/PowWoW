@@ -417,7 +417,7 @@ int32 SpellEffectInfo::CalcValue(WorldObject const* caster /*= nullptr*/, int32 
         // if base level is greater than spell level, reduce by base level (eg. pilgrims foods)
         level -= int32(std::max(_spellInfo->BaseLevel, _spellInfo->SpellLevel));
         if (Effect == SPELL_EFFECT_SCHOOL_DAMAGE || Effect == SPELL_EFFECT_HEAL)
-            basePoints += int32(level * (basePointsPerLevel / (60 / level)));
+            basePoints += int32(level * (basePointsPerLevel / (int32(_spellInfo->MaxLevel) / level)));
         else
             basePoints += int32(level * basePointsPerLevel);
     }
