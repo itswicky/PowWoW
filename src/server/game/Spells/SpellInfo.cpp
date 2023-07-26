@@ -416,8 +416,12 @@ int32 SpellEffectInfo::CalcValue(WorldObject const* caster /*= nullptr*/, int32 
 
         // if base level is greater than spell level, reduce by base level (eg. pilgrims foods)
         level -= int32(std::max(_spellInfo->BaseLevel, _spellInfo->SpellLevel));
-        if (Effect == SPELL_EFFECT_SCHOOL_DAMAGE || Effect == SPELL_EFFECT_HEAL)
+
+        if ((Effect == SPELL_EFFECT_SCHOOL_DAMAGE || Effect == SPELL_EFFECT_HEAL) && int32(_spellInfo->MaxLevel) != 0 && level != 0) // if maxlevel or level = 0 we divide by 0
+        {
+            ++level;
             basePoints += int32(level * (basePointsPerLevel / (int32(_spellInfo->MaxLevel) / level)));
+        }
         else
             basePoints += int32(level * basePointsPerLevel);
     }
@@ -447,7 +451,7 @@ int32 SpellEffectInfo::CalcValue(WorldObject const* caster /*= nullptr*/, int32 
             value += PointsPerComboPoint * comboPoints;
     }
 
-    if ((Effect == SPELL_EFFECT_SCHOOL_DAMAGE || Effect == SPELL_EFFECT_HEAL)&& casterUnit && basePointsPerLevel >= 1 && _spellInfo->BaseLevel == 1 && _spellInfo->MaxLevel == 80 && !SPELL_ATTR4_FIXED_DAMAGE)
+    if ((Effect == SPELL_EFFECT_SCHOOL_DAMAGE || Effect == SPELL_EFFECT_HEAL) && casterUnit && basePointsPerLevel > 0 && _spellInfo->BaseLevel == 1 && _spellInfo->MaxLevel == 60 && !SPELL_ATTR4_FIXED_DAMAGE)
         value *= frand(0.9f, 1.1f);
 
     if (caster)
