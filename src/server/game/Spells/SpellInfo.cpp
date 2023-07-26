@@ -451,7 +451,7 @@ int32 SpellEffectInfo::CalcValue(WorldObject const* caster /*= nullptr*/, int32 
             value += PointsPerComboPoint * comboPoints;
     }
 
-    if ((Effect == SPELL_EFFECT_SCHOOL_DAMAGE || Effect == SPELL_EFFECT_HEAL) && casterUnit && basePointsPerLevel > 0 && _spellInfo->BaseLevel == 1 && _spellInfo->MaxLevel == 60 && !SPELL_ATTR4_FIXED_DAMAGE)
+    if ((Effect == SPELL_EFFECT_SCHOOL_DAMAGE || Effect == SPELL_EFFECT_HEAL) && casterUnit && basePointsPerLevel > 0 && _spellInfo->BaseLevel == 1 && _spellInfo->MaxLevel == 60 && !_spellInfo->HasAttribute(SPELL_ATTR4_FIXED_DAMAGE))
         value *= frand(0.9f, 1.1f);
 
     if (caster)
