@@ -4266,7 +4266,7 @@ void ObjectMgr::LoadPlayerInfo()
                 uint32 classMask = fields[1].GetUInt32();
                 PlayerLevelupSpell levelup;
                 levelup.level = fields[2].GetUInt8();
-                levelup.Spell = fields[3].GetUInt16();
+                levelup.Spell = fields[3].GetUInt32();
 
                 if (raceMask != 0 && !(raceMask & RACEMASK_ALL_PLAYABLE))
                 {
