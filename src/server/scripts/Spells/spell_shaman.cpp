@@ -83,7 +83,7 @@ enum ShamanSpells
     SPELL_SHAMAN_CHAINED_HEAL                   = 70809,
     SPELL_SHAMAN_TOTEM_OF_WRATH_SPELL_POWER     = 63283,
     SPELL_SHAMAN_FREEZE                         = 63685,
-    SPELL_SHAMAN_FLAMETONGUE_ATTACK             = 10444,
+    SPELL_SHAMAN_FLAMETONGUE_ATTACK             = 91221,
     SPELL_SHAMAN_LIGHTNING_BOLT_OVERLOAD_R1     = 45284,
     SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD_R1    = 45297,
     SPELL_SHAMAN_LIGHTNING_SHIELD_DAMAGE_R1     = 26364,
@@ -594,13 +594,9 @@ class spell_sha_flametongue_weapon : public AuraScript
         if (!player)
             return false;
 
-        Item* item = player->GetItemByGuid(GetAura()->GetCastItemGUID());
-        if (!item || !item->IsEquipped())
-            return false;
-
-        WeaponAttackType attType = Player::GetAttackBySlot(item->GetSlot());
-        if (attType != BASE_ATTACK && attType != OFF_ATTACK)
-            return false;
+        WeaponAttackType attType = BASE_ATTACK;
+        if (eventInfo.GetTypeMask() & PROC_FLAG_DONE_OFFHAND_ATTACK)
+            attType = OFF_ATTACK;
 
         if (((attType == BASE_ATTACK) && !(eventInfo.GetTypeMask() & PROC_FLAG_DONE_MAINHAND_ATTACK)) ||
             ((attType == OFF_ATTACK) && !(eventInfo.GetTypeMask() & PROC_FLAG_DONE_OFFHAND_ATTACK)))
@@ -619,9 +615,9 @@ class spell_sha_flametongue_weapon : public AuraScript
         if (eventInfo.GetTypeMask() & PROC_FLAG_DONE_OFFHAND_ATTACK)
             attType = OFF_ATTACK;
 
-        Item* item = ASSERT_NOTNULL(player->GetWeaponForAttack(attType));
+        //Item* item = ASSERT_NOTNULL(player->GetWeaponForAttack(attType));
 
-        float basePoints = aurEff->GetSpellEffectInfo().CalcValue();
+        float basePoints = aurEff->GetSpellEffectInfo().CalcValue(player);
 
         // Flametongue max damage is normalized based on a 4.0 speed weapon
         // Tooltip says max damage = BasePoints / 25, so BasePoints / 25 / 4 to get base damage per 1.0s AS
@@ -644,9 +640,7 @@ class spell_sha_flametongue_weapon : public AuraScript
 
         // All done, now proc damage
         CastSpellExtraArgs args(aurEff);
-        args
-            .SetCastItem(item)
-            .AddSpellBP0(fireDamage + spellPowerBonus);
+        args.AddSpellBP0(fireDamage + spellPowerBonus);
         player->CastSpell(target, SPELL_SHAMAN_FLAMETONGUE_ATTACK, args);
     }
 

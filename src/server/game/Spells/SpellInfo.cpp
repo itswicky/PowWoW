@@ -417,7 +417,9 @@ int32 SpellEffectInfo::CalcValue(WorldObject const* caster /*= nullptr*/, int32 
         // if base level is greater than spell level, reduce by base level (eg. pilgrims foods)
         level -= int32(std::max(_spellInfo->BaseLevel, _spellInfo->SpellLevel));
 
-        if ((Effect == SPELL_EFFECT_SCHOOL_DAMAGE || Effect == SPELL_EFFECT_HEAL || ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE || ApplyAuraName == SPELL_AURA_PERIODIC_HEAL) && int32(_spellInfo->MaxLevel) != 0 && level != 0) // if maxlevel or level = 0 we divide by 0
+        if ((Effect == SPELL_EFFECT_SCHOOL_DAMAGE || Effect == SPELL_EFFECT_HEAL || ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE || ApplyAuraName == SPELL_AURA_PERIODIC_HEAL) // Generic damage and healing effects
+            || (_spellInfo->GetSpellSpecific() == SPELL_SPECIFIC_WEAPON_IMBUE)   // Flametongue Weapon
+            && int32(_spellInfo->MaxLevel) != 0 && level != 0)      // if maxlevel or level = 0 we divide by 0
         {
             ++level;
             basePoints += int32(level * level * basePointsPerLevel / int32(_spellInfo->MaxLevel));
@@ -451,7 +453,13 @@ int32 SpellEffectInfo::CalcValue(WorldObject const* caster /*= nullptr*/, int32 
             value += PointsPerComboPoint * comboPoints;
     }
 
-    if ((Effect == SPELL_EFFECT_SCHOOL_DAMAGE || Effect == SPELL_EFFECT_HEAL) && casterUnit && basePointsPerLevel > 0 && _spellInfo->BaseLevel == 1 && _spellInfo->MaxLevel == 60 && !_spellInfo->HasAttribute(SPELL_ATTR4_FIXED_DAMAGE) && !_spellInfo->HasAttribute(SPELL_ATTR4_DAMAGE_DOESNT_BREAK_AURAS))
+    if ((Effect == SPELL_EFFECT_SCHOOL_DAMAGE || Effect == SPELL_EFFECT_HEAL) &&
+        casterUnit &&
+        basePointsPerLevel > 0 &&
+        _spellInfo->BaseLevel == 1 &&
+        _spellInfo->MaxLevel == 60 &&
+        !_spellInfo->HasAttribute(SPELL_ATTR4_FIXED_DAMAGE) &&
+        !_spellInfo->HasAttribute(SPELL_ATTR4_DAMAGE_DOESNT_BREAK_AURAS))
         value *= frand(0.9f, 1.1f);
 
     if (caster)
@@ -1424,6 +1432,7 @@ bool SpellInfo::IsAuraExclusiveBySpecificPerCasterWith(SpellInfo const* spellInf
         case SPELL_SPECIFIC_ASPECT:
         case SPELL_SPECIFIC_JUDGEMENT:
         case SPELL_SPECIFIC_WARLOCK_CORRUPTION:
+        case SPELL_SPECIFIC_WEAPON_IMBUE:
             return spellSpec == spellInfo->GetSpellSpecific();
         default:
             return false;
@@ -2182,6 +2191,9 @@ void SpellInfo::_LoadSpellSpecific()
                     || SpellFamilyFlags[0] & 0x00000400
                     || Id == 23552)
                     return SPELL_SPECIFIC_ELEMENTAL_SHIELD;
+
+                if (SpellFamilyFlags[2] & 0x8000)
+                    return SPELL_SPECIFIC_WEAPON_IMBUE;
 
                 break;
             }

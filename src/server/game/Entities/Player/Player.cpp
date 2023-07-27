@@ -24982,7 +24982,8 @@ void Player::StoreLootItem(uint8 lootSlot, Loot* loot)
 
 uint32 Player::CalculateTalentsPoints() const
 {
-    uint32 base_talent = GetLevel() < 10 ? 0 : GetLevel()-9;
+    // Only allow player to get 1 talent point
+    uint32 base_talent = GetLevel() < 10 ? 0 : 1; //GetLevel()-9;
 
     if (GetClass() != CLASS_DEATH_KNIGHT || GetMapId() != 609)
         return uint32(base_talent * sWorld->getRate(RATE_TALENT));
