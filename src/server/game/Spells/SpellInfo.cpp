@@ -417,7 +417,7 @@ int32 SpellEffectInfo::CalcValue(WorldObject const* caster /*= nullptr*/, int32 
         // if base level is greater than spell level, reduce by base level (eg. pilgrims foods)
         level -= int32(std::max(_spellInfo->BaseLevel, _spellInfo->SpellLevel));
 
-        if ((Effect == SPELL_EFFECT_SCHOOL_DAMAGE || Effect == SPELL_EFFECT_HEAL || ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE || ApplyAuraName == SPELL_AURA_PERIODIC_HEAL) // Generic damage and healing effects
+        if ((Effect == SPELL_EFFECT_SCHOOL_DAMAGE || Effect == SPELL_EFFECT_HEAL || ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE || ApplyAuraName == SPELL_AURA_PERIODIC_HEAL || Effect == SPELL_EFFECT_ENERGIZE) // Generic damage and healing effects
             || (_spellInfo->GetSpellSpecific() == SPELL_SPECIFIC_WEAPON_IMBUE)   // Flametongue Weapon
             && int32(_spellInfo->MaxLevel) != 0 && level != 0)      // if maxlevel or level = 0 we divide by 0
         {

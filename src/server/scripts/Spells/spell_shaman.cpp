@@ -502,14 +502,15 @@ class spell_sha_fire_nova : public SpellScript
 
     bool Validate(SpellInfo const* spellInfo) override
     {
-        SpellInfo const* firstRankSpellInfo = sSpellMgr->GetSpellInfo(SPELL_SHAMAN_FIRE_NOVA_R1);
+        /*SpellInfo const* firstRankSpellInfo = sSpellMgr->GetSpellInfo(SPELL_SHAMAN_FIRE_NOVA_R1);
         if (!firstRankSpellInfo || !spellInfo->IsRankOf(firstRankSpellInfo))
             return false;
 
         uint8 rank = spellInfo->GetRank();
         if (!sSpellMgr->GetSpellWithRank(SPELL_SHAMAN_FIRE_NOVA_TRIGGERED_R1, rank, true))
             return false;
-        return true;
+        return true;*/
+        return ValidateSpellInfo({ 91228 });
     }
 
     SpellCastResult CheckFireTotem()
@@ -533,11 +534,8 @@ class spell_sha_fire_nova : public SpellScript
     {
         Unit* caster = GetCaster();
         if (Creature* totem = caster->GetMap()->GetCreature(caster->m_SummonSlot[1]))
-        {
-            uint8 rank = GetSpellInfo()->GetRank();
             if (totem->IsTotem())
-                caster->CastSpell(totem, sSpellMgr->GetSpellWithRank(SPELL_SHAMAN_FIRE_NOVA_TRIGGERED_R1, rank), true);
-        }
+                caster->CastSpell(totem, 91229, true);
     }
 
     void Register() override
