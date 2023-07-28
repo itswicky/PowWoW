@@ -293,7 +293,7 @@ void ObjectMgr::LoadLevelupSpells()
 {
     uint32 oldMSTime = getMSTime();
 
-    QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, level, Spell FROM player_levelup_spells");
+    QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell, level, Required FROM player_levelup_spells");
 
     if (!result)
     {
@@ -309,8 +309,9 @@ void ObjectMgr::LoadLevelupSpells()
             uint32 raceMask = fields[0].GetUInt32();
             uint32 classMask = fields[1].GetUInt32();
             PlayerLevelupSpell levelup;
-            levelup.level = fields[2].GetUInt8();
-            levelup.Spell = fields[3].GetUInt32();
+            levelup.Spell = fields[2].GetUInt32();
+            levelup.level = fields[3].GetUInt8();
+            levelup.requiredSpell = fields[4].GetUInt32();
 
             if (raceMask != 0 && !(raceMask & RACEMASK_ALL_PLAYABLE))
             {
@@ -4319,7 +4320,7 @@ void ObjectMgr::LoadPlayerInfo()
     {
         uint32 oldMSTime = getMSTime();
 
-        QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, level, Spell FROM player_levelup_spells");
+        QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell, level, Required FROM player_levelup_spells");
 
         if (!result)
         {
@@ -4335,8 +4336,9 @@ void ObjectMgr::LoadPlayerInfo()
                 uint32 raceMask = fields[0].GetUInt32();
                 uint32 classMask = fields[1].GetUInt32();
                 PlayerLevelupSpell levelup;
-                levelup.level = fields[2].GetUInt8();
-                levelup.Spell = fields[3].GetUInt32();
+                levelup.Spell = fields[2].GetUInt32();
+                levelup.level = fields[3].GetUInt8();
+                levelup.requiredSpell = fields[4].GetUInt32();
 
                 if (raceMask != 0 && !(raceMask & RACEMASK_ALL_PLAYABLE))
                 {

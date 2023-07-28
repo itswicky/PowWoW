@@ -687,8 +687,9 @@ typedef std::vector<PlayerCreateInfoSkill> PlayerCreateInfoSkills;
 
 struct PlayerLevelupSpell
 {
-    uint8 level;
     uint32 Spell;
+    uint8 level;    
+    uint32 requiredSpell;
 };
 
 typedef std::vector<PlayerLevelupSpell> PlayerLevelupSpells;

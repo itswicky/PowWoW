@@ -23052,19 +23052,20 @@ void Player::LearnLevelupSpells()
     ASSERT(info);
     for (PlayerLevelupSpells::const_iterator itr = info->levelupSpells.begin(); itr != info->levelupSpells.end(); ++itr)
     {
+        uint32 plevel = GetLevel();
         uint32 spell = itr->Spell;
         uint32 slevel = itr->level;
-        uint32 plevel = GetLevel();
+        uint32 rspell = itr->requiredSpell;
+        bool hasrspell = true;
 
-        if ((plevel < slevel) && HasSpell(spell))
+        if (rspell != 0)
+            hasrspell = HasSpell(rspell);
+
+        if ((plevel < slevel) && HasSpell(spell) || (!hasrspell && HasSpell(spell))) // remove spell from player if they do not meet level requirement or spell requirement, but somehow they have the spell. currently only gm .level -x
             RemoveSpell(spell, false, false);
 
-        // if we are not yet high enough level, ignore
-        if (plevel < slevel)
-            continue;
-
-        // if we already know spell, ignore
-        if (HasSpell(spell))
+        // if we are not yet high enough level, already know the spell, or do not have the requisite spell, ignore
+        if (plevel < slevel || HasSpell(spell) || !hasrspell)
             continue;
 
         TC_LOG_DEBUG("entities.player.loading", "Player::LearnLevelupSpells: Player '%s' (%s, Class: %u Race: %u): Adding levelup spell (SpellID: %u)",
