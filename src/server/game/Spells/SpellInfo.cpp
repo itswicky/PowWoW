@@ -409,20 +409,22 @@ int32 SpellEffectInfo::CalcValue(WorldObject const* caster /*= nullptr*/, int32 
     if (casterUnit && basePointsPerLevel != 0.0f)
     {
         int32 level = int32(casterUnit->GetLevel());
-        if (level > int32(_spellInfo->MaxLevel) && _spellInfo->MaxLevel > 0)
-            level = int32(_spellInfo->MaxLevel);
+        int32 maxSpellLevel = int32(_spellInfo->MaxLevel);
+        if (level > maxSpellLevel && maxSpellLevel > 0)
+            level = maxSpellLevel;
         else if (level < int32(_spellInfo->BaseLevel))
             level = int32(_spellInfo->BaseLevel);
 
         // if base level is greater than spell level, reduce by base level (eg. pilgrims foods)
         level -= int32(std::max(_spellInfo->BaseLevel, _spellInfo->SpellLevel));
 
-        if ((Effect == SPELL_EFFECT_SCHOOL_DAMAGE || Effect == SPELL_EFFECT_HEAL || ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE || ApplyAuraName == SPELL_AURA_PERIODIC_HEAL || Effect == SPELL_EFFECT_ENERGIZE) // Generic damage and healing effects
-            || (_spellInfo->GetSpellSpecific() == SPELL_SPECIFIC_WEAPON_IMBUE)   // Flametongue Weapon
-            && int32(_spellInfo->MaxLevel) != 0 && level != 0)      // if maxlevel or level = 0 we divide by 0
+        if ((Effect == SPELL_EFFECT_SCHOOL_DAMAGE || Effect == SPELL_EFFECT_HEAL || ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE || ApplyAuraName == SPELL_AURA_PERIODIC_HEAL || Effect == SPELL_EFFECT_ENERGIZE // Generic damage and healing effects
+            || _spellInfo->GetSpellSpecific() == SPELL_SPECIFIC_WEAPON_IMBUE)   // Flametongue Weapon
+            && maxSpellLevel != 0                                               // if maxlevel or level = 0 we divide by 0
+            && caster->IsPlayer())                                              // only if caster is a player
         {
             ++level;
-            basePoints += int32(level * level * basePointsPerLevel / int32(_spellInfo->MaxLevel));
+            basePoints += int32(level * level * basePointsPerLevel / maxSpellLevel);
         }
         else
             basePoints += int32(level * basePointsPerLevel);
@@ -463,7 +465,7 @@ int32 SpellEffectInfo::CalcValue(WorldObject const* caster /*= nullptr*/, int32 
         value *= frand(0.9f, 1.1f);
 
     if (caster)
-        value = caster->ApplyEffectModifiers(_spellInfo, EffectIndex, value);
+        value = caster->ApplyEffectModifiers(_spellInfo, EffectIndex, value);;
 
     if (casterUnit)
     {

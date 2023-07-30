@@ -1661,7 +1661,7 @@ void Unit::HandleEmoteCommand(Emote emoteId)
     }
 
     float const averageResist = Unit::CalculateAverageResistReduction(attacker, schoolMask, victim, spellInfo);
-    float discreteResistProbability[11] = { };
+    /*float discreteResistProbability[11] = {};
     if (averageResist <= 0.1f)
     {
         discreteResistProbability[0] = 1.0f - 7.5f * averageResist;
@@ -1680,9 +1680,9 @@ void Unit::HandleEmoteCommand(Emote emoteId)
     uint32 resistance = 0;
     for (; resistance < 11; ++resistance)
         if (roll < (probabilitySum += discreteResistProbability[resistance]))
-            break;
+            break;*/
 
-    float damageResisted = damage * resistance / 10.f;
+    float damageResisted = damage * averageResist;
     if (damageResisted > 0.0f) // if any damage was resisted
     {
         int32 ignoredResistance = 0;
@@ -1718,6 +1718,8 @@ void Unit::HandleEmoteCommand(Emote emoteId)
 
 /*static*/ float Unit::CalculateAverageResistReduction(WorldObject const* caster, SpellSchoolMask schoolMask, Unit const* victim, SpellInfo const* spellInfo)
 {
+    uint32 spellID = spellInfo->Id; // For logging and debugging
+
     float victimResistance = float(victim->GetResistance(schoolMask));
     if (caster)
     {
@@ -1740,12 +1742,16 @@ void Unit::HandleEmoteCommand(Emote emoteId)
         victimResistance = 0.0f;
 
     victimResistance = std::max(victimResistance, 0.0f);
+    float levelDiff = 0.0f;
+    float diffResistance = 0.0f;
 
     // level-based resistance does not apply to binary spells, and cannot be overcome by spell penetration
     // gameobject caster -- should it have level based resistance?
     if (caster && caster->GetTypeId() != TYPEID_GAMEOBJECT && (!spellInfo || !spellInfo->HasAttribute(SPELL_ATTR0_CU_BINARY_SPELL)))
-        victimResistance += std::max((float(victim->GetLevelForTarget(caster)) - float(caster->GetLevelForTarget(victim))) * 5.0f, 0.0f);
-
+        levelDiff += std::max((float(victim->GetLevelForTarget(caster)) - float(caster->GetLevelForTarget(victim))), 0.0f);
+    if (levelDiff > 0)
+        diffResistance = levelDiff / (levelDiff * 10 + 40);
+    
     static uint32 const BOSS_LEVEL = 83;
     static float const BOSS_RESISTANCE_CONSTANT = 510.0f;
     uint32 level = victim->GetLevel();
@@ -1756,7 +1762,12 @@ void Unit::HandleEmoteCommand(Emote emoteId)
     else
         resistanceConstant = level * 5.0f;
 
-    return victimResistance / (victimResistance + resistanceConstant);
+    float totalResit = victimResistance / (victimResistance + resistanceConstant);
+    float finalResist = totalResit + diffResistance;
+
+    TC_LOG_INFO("server.worldserver", "Unit::CalculateAverageResistReduction triggered by spell %u diffResistance value: %f, totalResit value: %f, and finalResist value: %f\n", spellID, diffResistance, totalResit, finalResist);
+
+    return finalResist;
 }
 
 /*static*/ void Unit::CalcAbsorbResist(DamageInfo& damageInfo, Spell* spell /*= nullptr*/)
