@@ -403,17 +403,45 @@ void ThreatManager::AddThreat(Unit* target, float amount, SpellInfo const* spell
 
         if (ref->IsOnline())
             ref->AddThreat(amount);
+
         return;
     }
 
-    // ok, we're now in combat - create the threat list reference and push it to the respective managers
     ThreatReference* ref = new ThreatReference(this, target);
+    // ok, we're now in combat - create the threat list reference and push it to the respective managers    
     PutThreatListRef(target->GetGUID(), ref);
     target->GetThreatManager().PutThreatenedByMeRef(_owner->GetGUID(), ref);
 
     ref->UpdateOffline();
     if (ref->IsOnline()) // we only add the threat if the ref is currently available
+    {
         ref->AddThreat(amount);
+        //TC_LOG_INFO("server.worldserver", "third call of AddThreat within ThreatManager::AddThreatwith value %f.", amount);
+        uint32 basehp = _owner->GetCreateHealth();
+        uint32 stephp = basehp / 2;
+        uint32 count = 0;
+        MapEntry const* mapEntry = sMapStore.LookupEntry(_owner->GetMapId());
+
+        if (ref->IsOnline() && target->IsPlayer() && _owner->IsCreature() && _owner->m_unitTypeMask == UNIT_MASK_NONE)// && !_owner->IsPet() && !_owner->IsSummon() && !_owner->IsGuardian() && !_owner->IsHunterPet() && !_owner->IsTotem() && !_owner->IsVehicle() )
+        {
+            //TC_LOG_INFO("server.worldserver", "first call of AddThreat within ThreatManager::AddThreat with value %f.", amount);
+            for (auto* it : _owner->GetThreatManager().GetModifiableThreatList())
+            {
+                Unit* victim = it->GetVictim();
+                if (victim->IsPlayer())
+                    if (victim->GetGUID() != target->GetGUID() && (victim->IsInPartyWith(target) || victim->IsInRaidWith(target)) && !mapEntry->IsDungeon()) // Only increase target health if you find people in threat table in group or raid to prevent griefing and do not scale in dungeons and raids
+                    {
+                        ++count;
+                        TC_LOG_INFO("server.worldserver", "ThreatManager::AddThreat found %s on threat list that was not %s. Incremented count to: %u", victim->GetGUID().ToString().c_str(), target->GetGUID().ToString().c_str(), count);
+                    }
+            }
+            if (count != 0)
+            {
+                _owner->SetMaxHealth(basehp + stephp * count);
+                _owner->ModifyHealth(stephp);
+            }
+        }
+    }
 
     if (!_currentVictimRef)
         UpdateVictim();
