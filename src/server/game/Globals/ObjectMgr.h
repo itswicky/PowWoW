@@ -694,6 +694,22 @@ struct PlayerLevelupSpell
 
 typedef std::vector<PlayerLevelupSpell> PlayerLevelupSpells;
 
+struct PlayerSpellAffliction
+{
+    uint32 Spell;
+    uint8 weight;
+};
+
+typedef std::vector<PlayerSpellAffliction> PlayerSpellAfflictions;
+
+struct PlayerSpellBoon
+{
+    uint32 Spell;
+    uint8 weight;
+};
+
+typedef std::vector<PlayerSpellBoon> PlayerSpellBoons;
+
 // existence checked by displayId != 0
 struct PlayerInfo
 {
@@ -711,6 +727,8 @@ struct PlayerInfo
     PlayerCreateInfoActions action;
     PlayerCreateInfoSkills skills;
     PlayerLevelupSpells levelupSpells;
+    PlayerSpellAfflictions afflictions;
+    PlayerSpellBoons boons;
 
     //[level-1] 0..MaxPlayerLevel-1
     std::unique_ptr<PlayerLevelInfo[]> levelInfo;
@@ -1164,6 +1182,8 @@ class TC_GAME_API ObjectMgr
         void LoadCreatureClassLevelStats();
         void LoadCreatureLocales();
         void LoadLevelupSpells();
+        void LoadAfflictions();
+        void LoadBoons();
         void LoadCreatureTemplates();
         void LoadCreatureTemplateAddons();
         void LoadCreatureTemplate(Field* fields);
@@ -1222,6 +1242,7 @@ class TC_GAME_API ObjectMgr
         PageText const* GetPageText(uint32 pageEntry);
 
         void LoadPlayerInfo();
+        void LoadLevelupInfo();
         void LoadPetLevelInfo();
         void LoadExplorationBaseXP();
         void LoadPetNames();

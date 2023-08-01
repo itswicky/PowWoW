@@ -147,6 +147,8 @@ public:
             { "skill_fishing_base_level",      rbac::RBAC_PERM_COMMAND_RELOAD_SKILL_FISHING_BASE_LEVEL,         true,  &HandleReloadSkillFishingBaseLevelCommand,      "" },
             { "skinning_loot_template",        rbac::RBAC_PERM_COMMAND_RELOAD_SKINNING_LOOT_TEMPLATE,           true,  &HandleReloadLootTemplatesSkinningCommand,      "" },
             { "smart_scripts",                 rbac::RBAC_PERM_COMMAND_RELOAD_SMART_SCRIPTS,                    true,  &HandleReloadSmartScripts,                      "" },
+            { "spell_afflictions",             rbac::RBAC_PERM_COMMAND_RELOAD_AFFLICTIONS,                      true,  &HandleReloadAfflictionsCommand,                "" },
+            { "spell_boons",                   rbac::RBAC_PERM_COMMAND_RELOAD_BOONS,                            true,  &HandleReloadBoonsCommand,                      "" },
             { "spell_required",                rbac::RBAC_PERM_COMMAND_RELOAD_SPELL_REQUIRED,                   true,  &HandleReloadSpellRequiredCommand,              "" },
             { "spell_area",                    rbac::RBAC_PERM_COMMAND_RELOAD_SPELL_AREA,                       true,  &HandleReloadSpellAreaCommand,                  "" },
             { "spell_bonus_data",              rbac::RBAC_PERM_COMMAND_RELOAD_SPELL_BONUS_DATA,                 true,  &HandleReloadSpellBonusesCommand,               "" },
@@ -1202,6 +1204,22 @@ public:
         TC_LOG_INFO("misc", "Reloading player_levelup_spells table...");
         sObjectMgr->LoadLevelupSpells();
         handler->SendGlobalGMSysMessage("levelup spells reloaded.");
+        return true;
+    }
+
+    static bool HandleReloadAfflictionsCommand(ChatHandler* handler, char const* /*args*/)
+    {
+        TC_LOG_INFO("misc", "Reloading spell_afflictions table...");
+        sObjectMgr->LoadAfflictions();
+        handler->SendGlobalGMSysMessage("afflictions reloaded.");
+        return true;
+    }
+
+    static bool HandleReloadBoonsCommand(ChatHandler* handler, char const* /*args*/)
+    {
+        TC_LOG_INFO("misc", "Reloading spell_boons table...");
+        sObjectMgr->LoadBoons();
+        handler->SendGlobalGMSysMessage("boons reloaded.");
         return true;
     }
 };

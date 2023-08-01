@@ -1927,6 +1927,9 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading Player Create Data...");
     sObjectMgr->LoadPlayerInfo();
 
+    TC_LOG_INFO("server.loading", "Loading Player Levelup Data...");
+    sObjectMgr->LoadLevelupInfo();
+
     TC_LOG_INFO("server.loading", "Loading Exploration BaseXP Data...");
     sObjectMgr->LoadExplorationBaseXP();
 

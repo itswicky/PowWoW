@@ -745,6 +745,9 @@ enum RBACPermissions
     RBAC_PERM_COMMAND_PDUMP_COPY                             = 880,
     RBAC_PERM_COMMAND_RELOAD_VEHICLE_TEMPLATE                = 881,
     RBAC_PERM_COMMAND_RELOAD_LEVELUP_SPELLS                  = 882,
+    RBAC_PERM_COMMAND_RELOAD_AFFLICTIONS                     = 883,
+    RBAC_PERM_COMMAND_RELOAD_BOONS                           = 884,
+
     //
     // IF YOU ADD NEW PERMISSIONS, ADD THEM IN MASTER BRANCH AS WELL!
     //

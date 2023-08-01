@@ -357,7 +357,139 @@ void ObjectMgr::LoadLevelupSpells()
 
         TC_LOG_INFO("server.loading", ">> Loaded %u custom player levelup spells in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
     }
+}
 
+void ObjectMgr::LoadAfflictions()
+{
+    uint32 oldMSTime = getMSTime();
+
+    QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell, level, Required FROM player_levelup_spells");
+
+    if (!result)
+    {
+        TC_LOG_INFO("server.loading", ">> Loaded 0 player levelup spells. DB table `player_levelup_spells` is empty.");
+    }
+    else
+    {
+        uint32 count = 0;
+
+        do
+        {
+            Field* fields = result->Fetch();
+            uint32 raceMask = fields[0].GetUInt32();
+            uint32 classMask = fields[1].GetUInt32();
+            PlayerLevelupSpell levelup;
+            levelup.Spell = fields[2].GetUInt32();
+            levelup.level = fields[3].GetUInt8();
+            levelup.requiredSpell = fields[4].GetUInt32();
+
+            if (raceMask != 0 && !(raceMask & RACEMASK_ALL_PLAYABLE))
+            {
+                TC_LOG_ERROR("sql.sql", "Wrong race mask %u in `playercreateinfo_spell_custom` table, ignoring.", raceMask);
+                continue;
+            }
+
+            if (classMask != 0 && !(classMask & CLASSMASK_ALL_PLAYABLE))
+            {
+                TC_LOG_ERROR("sql.sql", "Wrong class mask %u in `playercreateinfo_spell_custom` table, ignoring.", classMask);
+                continue;
+            }
+
+            if (levelup.level > sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL))
+            {
+                TC_LOG_INFO("misc", "Unused (> MaxPlayerLevel in worldserver.conf) level %u in `player_classlevelstats` table, ignoring.", levelup.Spell);
+                ++count;                                    // make result loading percent "expected" correct in case disabled detail mode for example.
+                continue;
+            }
+
+            for (uint32 raceIndex = RACE_HUMAN; raceIndex < MAX_RACES; ++raceIndex)
+            {
+                if (raceMask == 0 || ((1 << (raceIndex - 1)) & raceMask))
+                {
+                    for (uint32 classIndex = CLASS_WARRIOR; classIndex < MAX_CLASSES; ++classIndex)
+                    {
+                        if (classMask == 0 || ((1 << (classIndex - 1)) & classMask))
+                        {
+                            if (auto& info = _playerInfo[raceIndex][classIndex])
+                            {
+                                info->levelupSpells.push_back(levelup);
+                                ++count;
+                            }
+                            // We need something better here, the check is not accounting for spells used by multiple races/classes but not all of them.
+                            // Either split the masks per class, or per race, which kind of kills the point yet.
+                            // else if (raceMask != 0 && classMask != 0)
+                            //     TC_LOG_ERROR("sql.sql", "Racemask/classmask (%u/%u) combination was found containing an invalid race/class combination (%u/%u) in `%s` (Spell %u), ignoring.", raceMask, classMask, raceIndex, classIndex, tableName.c_str(), spellId);
+                        }
+                    }
+                }
+            }
+        } while (result->NextRow());
+
+        TC_LOG_INFO("server.loading", ">> Loaded %u afflictions in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
+    }
+}
+
+void ObjectMgr::LoadBoons()
+{
+    uint32 oldMSTime = getMSTime();
+
+    QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell, weight FROM spell_boons");
+
+    if (!result)
+    {
+        TC_LOG_INFO("server.loading", ">> Loaded 0 player boons. DB table `spell_boons` is empty.");
+    }
+
+    else
+    {
+        uint32 count = 0;
+
+        do
+        {
+            Field* fields = result->Fetch();
+            uint32 raceMask = fields[0].GetUInt32();
+            uint32 classMask = fields[1].GetUInt32();
+            PlayerSpellBoon boons;
+            boons.Spell = fields[2].GetUInt32();
+            boons.weight = fields[3].GetUInt8();
+
+            if (raceMask != 0 && !(raceMask & RACEMASK_ALL_PLAYABLE))
+            {
+                TC_LOG_ERROR("sql.sql", "Wrong race mask %u in `playercreateinfo_spell_custom` table, ignoring.", raceMask);
+                continue;
+            }
+
+            if (classMask != 0 && !(classMask & CLASSMASK_ALL_PLAYABLE))
+            {
+                TC_LOG_ERROR("sql.sql", "Wrong class mask %u in `playercreateinfo_spell_custom` table, ignoring.", classMask);
+                continue;
+            }
+
+            for (uint32 raceIndex = RACE_HUMAN; raceIndex < MAX_RACES; ++raceIndex)
+            {
+                if (raceMask == 0 || ((1 << (raceIndex - 1)) & raceMask))
+                {
+                    for (uint32 classIndex = CLASS_WARRIOR; classIndex < MAX_CLASSES; ++classIndex)
+                    {
+                        if (classMask == 0 || ((1 << (classIndex - 1)) & classMask))
+                        {
+                            if (auto& info = _playerInfo[raceIndex][classIndex])
+                            {
+                                info->boons.push_back(boons);
+                                ++count;
+                            }
+                            // We need something better here, the check is not accounting for spells used by multiple races/classes but not all of them.
+                            // Either split the masks per class, or per race, which kind of kills the point yet.
+                            // else if (raceMask != 0 && classMask != 0)
+                            //     TC_LOG_ERROR("sql.sql", "Racemask/classmask (%u/%u) combination was found containing an invalid race/class combination (%u/%u) in `%s` (Spell %u), ignoring.", raceMask, classMask, raceIndex, classIndex, tableName.c_str(), spellId);
+                        }
+                    }
+                }
+            }
+        } while (result->NextRow());
+
+        TC_LOG_INFO("server.loading", ">> Loaded %u boons in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
+    }
 }
 
 void ObjectMgr::LoadGossipMenuItemsLocales()
@@ -4022,6 +4154,204 @@ void ObjectMgr::PlayerCreateInfoAddItemHelper(uint32 race_, uint32 class_, uint3
     }
 }
 
+void ObjectMgr::LoadLevelupInfo()
+{
+    // Load playerlevelup spells
+    TC_LOG_INFO("server.loading", "Loading Player Levelup Spell Data...");
+    {
+        uint32 oldMSTime = getMSTime();
+
+        QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell, level, Required FROM player_levelup_spells");
+
+        if (!result)
+        {
+            TC_LOG_INFO("server.loading", ">> Loaded 0 player levelup spells. DB table `player_levelup_spells` is empty.");
+        }
+        else
+        {
+            uint32 count = 0;
+
+            do
+            {
+                Field* fields = result->Fetch();
+                uint32 raceMask = fields[0].GetUInt32();
+                uint32 classMask = fields[1].GetUInt32();
+                PlayerLevelupSpell levelup;
+                levelup.Spell = fields[2].GetUInt32();
+                levelup.level = fields[3].GetUInt8();
+                levelup.requiredSpell = fields[4].GetUInt32();
+
+                if (raceMask != 0 && !(raceMask & RACEMASK_ALL_PLAYABLE))
+                {
+                    TC_LOG_ERROR("sql.sql", "Wrong race mask %u in `playercreateinfo_spell_custom` table, ignoring.", raceMask);
+                    continue;
+                }
+
+                if (classMask != 0 && !(classMask & CLASSMASK_ALL_PLAYABLE))
+                {
+                    TC_LOG_ERROR("sql.sql", "Wrong class mask %u in `playercreateinfo_spell_custom` table, ignoring.", classMask);
+                    continue;
+                }
+
+                if (levelup.level > sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL))
+                {
+                    TC_LOG_INFO("misc", "Unused (> MaxPlayerLevel in worldserver.conf) level %u in `player_classlevelstats` table, ignoring.", levelup.Spell);
+                    ++count;                                    // make result loading percent "expected" correct in case disabled detail mode for example.
+                    continue;
+                }
+
+                for (uint32 raceIndex = RACE_HUMAN; raceIndex < MAX_RACES; ++raceIndex)
+                {
+                    if (raceMask == 0 || ((1 << (raceIndex - 1)) & raceMask))
+                    {
+                        for (uint32 classIndex = CLASS_WARRIOR; classIndex < MAX_CLASSES; ++classIndex)
+                        {
+                            if (classMask == 0 || ((1 << (classIndex - 1)) & classMask))
+                            {
+                                if (auto& info = _playerInfo[raceIndex][classIndex])
+                                {
+                                    info->levelupSpells.push_back(levelup);
+                                    ++count;
+                                }
+                                // We need something better here, the check is not accounting for spells used by multiple races/classes but not all of them.
+                                // Either split the masks per class, or per race, which kind of kills the point yet.
+                                // else if (raceMask != 0 && classMask != 0)
+                                //     TC_LOG_ERROR("sql.sql", "Racemask/classmask (%u/%u) combination was found containing an invalid race/class combination (%u/%u) in `%s` (Spell %u), ignoring.", raceMask, classMask, raceIndex, classIndex, tableName.c_str(), spellId);
+                            }
+                        }
+                    }
+                }
+            } while (result->NextRow());
+
+            TC_LOG_INFO("server.loading", ">> Loaded %u custom player levelup spells in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
+        }
+    }
+
+    // Load afflictions
+    TC_LOG_INFO("server.loading", "Loading Player Affliction Data...");
+    {
+        uint32 oldMSTime = getMSTime();
+
+        QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell, weight FROM spell_afflictions");
+
+        if (!result)
+        {
+            TC_LOG_INFO("server.loading", ">> Loaded 0 player afflictions. DB table `spell_afflictions` is empty.");
+        }
+
+        else
+        {
+            uint32 count = 0;
+
+            do
+            {
+                Field* fields = result->Fetch();
+                uint32 raceMask = fields[0].GetUInt32();
+                uint32 classMask = fields[1].GetUInt32();
+                PlayerSpellAffliction afflictions;
+                afflictions.Spell = fields[2].GetUInt32();
+                afflictions.weight = fields[3].GetUInt8();
+
+                if (raceMask != 0 && !(raceMask & RACEMASK_ALL_PLAYABLE))
+                {
+                    TC_LOG_ERROR("sql.sql", "Wrong race mask %u in `playercreateinfo_spell_custom` table, ignoring.", raceMask);
+                    continue;
+                }
+
+                if (classMask != 0 && !(classMask & CLASSMASK_ALL_PLAYABLE))
+                {
+                    TC_LOG_ERROR("sql.sql", "Wrong class mask %u in `playercreateinfo_spell_custom` table, ignoring.", classMask);
+                    continue;
+                }
+
+                for (uint32 raceIndex = RACE_HUMAN; raceIndex < MAX_RACES; ++raceIndex)
+                {
+                    if (raceMask == 0 || ((1 << (raceIndex - 1)) & raceMask))
+                    {
+                        for (uint32 classIndex = CLASS_WARRIOR; classIndex < MAX_CLASSES; ++classIndex)
+                        {
+                            if (classMask == 0 || ((1 << (classIndex - 1)) & classMask))
+                            {
+                                if (auto& info = _playerInfo[raceIndex][classIndex])
+                                {
+                                    info->afflictions.push_back(afflictions);
+                                    ++count;
+                                }
+                                // We need something better here, the check is not accounting for spells used by multiple races/classes but not all of them.
+                                // Either split the masks per class, or per race, which kind of kills the point yet.
+                                // else if (raceMask != 0 && classMask != 0)
+                                //     TC_LOG_ERROR("sql.sql", "Racemask/classmask (%u/%u) combination was found containing an invalid race/class combination (%u/%u) in `%s` (Spell %u), ignoring.", raceMask, classMask, raceIndex, classIndex, tableName.c_str(), spellId);
+                            }
+                        }
+                    }
+                }
+            } while (result->NextRow());
+        }
+    }
+
+    // Load boons
+    TC_LOG_INFO("server.loading", "Loading Player Boon Data...");
+    {
+        uint32 oldMSTime = getMSTime();
+
+        QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell, weight FROM spell_boons");
+
+        if (!result)
+        {
+            TC_LOG_INFO("server.loading", ">> Loaded 0 player boons. DB table `spell_boons` is empty.");
+        }
+
+        else
+        {
+            uint32 count = 0;
+
+            do
+            {
+                Field* fields = result->Fetch();
+                uint32 raceMask = fields[0].GetUInt32();
+                uint32 classMask = fields[1].GetUInt32();
+                PlayerSpellBoon boons;
+                boons.Spell = fields[2].GetUInt32();
+                boons.weight = fields[3].GetUInt8();
+
+                if (raceMask != 0 && !(raceMask & RACEMASK_ALL_PLAYABLE))
+                {
+                    TC_LOG_ERROR("sql.sql", "Wrong race mask %u in `playercreateinfo_spell_custom` table, ignoring.", raceMask);
+                    continue;
+                }
+
+                if (classMask != 0 && !(classMask & CLASSMASK_ALL_PLAYABLE))
+                {
+                    TC_LOG_ERROR("sql.sql", "Wrong class mask %u in `playercreateinfo_spell_custom` table, ignoring.", classMask);
+                    continue;
+                }
+
+                for (uint32 raceIndex = RACE_HUMAN; raceIndex < MAX_RACES; ++raceIndex)
+                {
+                    if (raceMask == 0 || ((1 << (raceIndex - 1)) & raceMask))
+                    {
+                        for (uint32 classIndex = CLASS_WARRIOR; classIndex < MAX_CLASSES; ++classIndex)
+                        {
+                            if (classMask == 0 || ((1 << (classIndex - 1)) & classMask))
+                            {
+                                if (auto& info = _playerInfo[raceIndex][classIndex])
+                                {
+                                    info->boons.push_back(boons);
+                                    ++count;
+                                }
+                                // We need something better here, the check is not accounting for spells used by multiple races/classes but not all of them.
+                                // Either split the masks per class, or per race, which kind of kills the point yet.
+                                // else if (raceMask != 0 && classMask != 0)
+                                //     TC_LOG_ERROR("sql.sql", "Racemask/classmask (%u/%u) combination was found containing an invalid race/class combination (%u/%u) in `%s` (Spell %u), ignoring.", raceMask, classMask, raceIndex, classIndex, tableName.c_str(), spellId);
+                            }
+                        }
+                    }
+                }
+            } while (result->NextRow());
+        }
+    }
+}
+
 void ObjectMgr::LoadPlayerInfo()
 {
     // Load playercreate
@@ -4312,77 +4642,6 @@ void ObjectMgr::LoadPlayerInfo()
             while (result->NextRow());
 
             TC_LOG_INFO("server.loading", ">> Loaded %u custom player create spells in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
-        }
-    }
-
-    // Load playerlevelup spells
-    TC_LOG_INFO("server.loading", "Loading Player Levelup Spell Data...");
-    {
-        uint32 oldMSTime = getMSTime();
-
-        QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell, level, Required FROM player_levelup_spells");
-
-        if (!result)
-        {
-            TC_LOG_INFO("server.loading", ">> Loaded 0 player levelup spells. DB table `player_levelup_spells` is empty.");
-        }
-        else
-        {
-            uint32 count = 0;
-
-            do
-            {
-                Field* fields = result->Fetch();
-                uint32 raceMask = fields[0].GetUInt32();
-                uint32 classMask = fields[1].GetUInt32();
-                PlayerLevelupSpell levelup;
-                levelup.Spell = fields[2].GetUInt32();
-                levelup.level = fields[3].GetUInt8();
-                levelup.requiredSpell = fields[4].GetUInt32();
-
-                if (raceMask != 0 && !(raceMask & RACEMASK_ALL_PLAYABLE))
-                {
-                    TC_LOG_ERROR("sql.sql", "Wrong race mask %u in `playercreateinfo_spell_custom` table, ignoring.", raceMask);
-                    continue;
-                }
-
-                if (classMask != 0 && !(classMask & CLASSMASK_ALL_PLAYABLE))
-                {
-                    TC_LOG_ERROR("sql.sql", "Wrong class mask %u in `playercreateinfo_spell_custom` table, ignoring.", classMask);
-                    continue;
-                }
-
-                if (levelup.level > sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL))
-                {
-                    TC_LOG_INFO("misc", "Unused (> MaxPlayerLevel in worldserver.conf) level %u in `player_classlevelstats` table, ignoring.", levelup.Spell);
-                    ++count;                                    // make result loading percent "expected" correct in case disabled detail mode for example.
-                    continue;
-                }
-
-                for (uint32 raceIndex = RACE_HUMAN; raceIndex < MAX_RACES; ++raceIndex)
-                {
-                    if (raceMask == 0 || ((1 << (raceIndex - 1)) & raceMask))
-                    {
-                        for (uint32 classIndex = CLASS_WARRIOR; classIndex < MAX_CLASSES; ++classIndex)
-                        {
-                            if (classMask == 0 || ((1 << (classIndex - 1)) & classMask))
-                            {
-                                if (auto& info = _playerInfo[raceIndex][classIndex])
-                                {
-                                    info->levelupSpells.push_back(levelup);
-                                    ++count;
-                                }
-                                // We need something better here, the check is not accounting for spells used by multiple races/classes but not all of them.
-                                // Either split the masks per class, or per race, which kind of kills the point yet.
-                                // else if (raceMask != 0 && classMask != 0)
-                                //     TC_LOG_ERROR("sql.sql", "Racemask/classmask (%u/%u) combination was found containing an invalid race/class combination (%u/%u) in `%s` (Spell %u), ignoring.", raceMask, classMask, raceIndex, classIndex, tableName.c_str(), spellId);
-                            }
-                        }
-                    }
-                }
-            } while (result->NextRow());
-
-            TC_LOG_INFO("server.loading", ">> Loaded %u custom player levelup spells in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
         }
     }
 
