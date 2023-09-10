@@ -1718,8 +1718,6 @@ void Unit::HandleEmoteCommand(Emote emoteId)
 
 /*static*/ float Unit::CalculateAverageResistReduction(WorldObject const* caster, SpellSchoolMask schoolMask, Unit const* victim, SpellInfo const* spellInfo)
 {
-    uint32 spellID = spellInfo->Id; // For logging and debugging
-
     float victimResistance = float(victim->GetResistance(schoolMask));
     if (caster)
     {
@@ -1764,8 +1762,6 @@ void Unit::HandleEmoteCommand(Emote emoteId)
 
     float totalResit = victimResistance / (victimResistance + resistanceConstant);
     float finalResist = totalResit + diffResistance;
-
-    TC_LOG_INFO("server.worldserver", "Unit::CalculateAverageResistReduction triggered by spell %u diffResistance value: %f, totalResit value: %f, and finalResist value: %f\n", spellID, diffResistance, totalResit, finalResist);
 
     return finalResist;
 }
