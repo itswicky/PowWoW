@@ -3035,8 +3035,8 @@ enum SkillType
     SKILL_PET_EXOTIC_RHINO         = 786,
     SKILL_PET_EXOTIC_CORE_HOUND    = 787,
     SKILL_PET_EXOTIC_SPIRIT_BEAST  = 788,
-    SKILL_AFFLICTION               = 789,
-    SKILL_BOON                     = 790,
+    SKILL_PLAYER_AFFLICTION        = 789,
+    SKILL_PLAYER_BOON              = 790,
 };
 
 #define MAX_SKILL_TYPE               791
