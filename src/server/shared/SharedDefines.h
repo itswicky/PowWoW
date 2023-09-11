@@ -149,7 +149,7 @@ enum Classes
     (1<<(CLASS_MAGE-1))   |(1<<(CLASS_WARLOCK-1))|(1<<(CLASS_DRUID-1)) | \
     (1<<(CLASS_DEATH_KNIGHT-1)))
 
-#define MAX_TALENT_TREES 3
+#define MAX_TALENT_TREES 4
 
 enum PlayerSpecializations
 {
@@ -174,6 +174,7 @@ enum PlayerSpecializations
     SPEC_SHAMAN_ELEMENTAL = 0,
     SPEC_SHAMAN_ENHANCEMENT = 1,
     SPEC_SHAMAN_RESTORATION = 2,
+    SPEC_SHAMAN_TOTEMIC = 3,
     SPEC_MAGE_ARCANE = 0,
     SPEC_MAGE_FIRE = 1,
     SPEC_MAGE_FROST = 2,
@@ -2978,6 +2979,7 @@ enum SkillType
     SKILL_ENHANCEMENT              = 373,
     SKILL_RESTORATION              = 374,
     SKILL_ELEMENTAL_COMBAT         = 375,
+    SKILL_TOTEMIC                  = 376,
     SKILL_SKINNING                 = 393,
     SKILL_MAIL                     = 413,
     SKILL_LEATHER                  = 414,
@@ -3032,10 +3034,12 @@ enum SkillType
     SKILL_PET_WASP                 = 785,
     SKILL_PET_EXOTIC_RHINO         = 786,
     SKILL_PET_EXOTIC_CORE_HOUND    = 787,
-    SKILL_PET_EXOTIC_SPIRIT_BEAST  = 788
+    SKILL_PET_EXOTIC_SPIRIT_BEAST  = 788,
+    SKILL_AFFLICTION               = 789,
+    SKILL_BOON                     = 790,
 };
 
-#define MAX_SKILL_TYPE               789
+#define MAX_SKILL_TYPE               791
 
 constexpr SkillType SkillByLockType(LockType locktype)
 {
