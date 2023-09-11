@@ -4599,7 +4599,7 @@ class spell_gen_dmg_heal_scaling : public AuraScript
 
     void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
     {
-        Player* player = GetTarget()->ToPlayer();
+        Player* player = GetCaster()->ToPlayer();
         if (!player)
             return;
 
