@@ -4592,6 +4592,35 @@ class spell_gen_class_specialization : public AuraScript
     }
 };
 
+// Scaling Damage & Healing aura
+class spell_gen_dmg_heal_scaling : public AuraScript
+{
+    PrepareAuraScript(spell_gen_dmg_heal_scaling);
+
+    void CalculateAmount(AuraEffect const* aurEff, int32& amount, bool& /*canBeRecalculated*/)
+    {
+        Player* player = GetTarget()->ToPlayer();
+        if (!player)
+            return;
+
+        uint32 plevel = player->GetLevel();
+
+        if (plevel <= 5)
+            amount = 0;
+        else
+            amount -= (plevel * 2) - 10;
+
+        if (amount < -30)
+            amount = -30;
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_gen_dmg_heal_scaling::CalculateAmount, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE);
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_gen_dmg_heal_scaling::CalculateAmount, EFFECT_1, SPELL_AURA_MOD_HEALING_DONE_PERCENT);
+    }
+};
+
 void AddSC_generic_spell_scripts()
 {
     RegisterSpellScript(spell_gen_absorb0_hitlimit1);
@@ -4737,4 +4766,5 @@ void AddSC_generic_spell_scripts()
     RegisterSpellScript(spell_gen_cannon_blast);
     RegisterSpellScript(spell_gen_submerged);
     RegisterSpellScript(spell_gen_class_specialization);
+    RegisterSpellScript(spell_gen_dmg_heal_scaling);
 }

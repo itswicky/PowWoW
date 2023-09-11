@@ -584,7 +584,7 @@ bool Player::Create(ObjectGuid::LowType guidlow, CharacterCreateInfo* createInfo
     // original spells
     LearnDefaultSkills();
     LearnCustomSpells();
-    AddXPScalingAura();
+    AddScalingAuras();
     LearnLevelupSpells();
 
     // original action bar
@@ -2627,7 +2627,7 @@ void Player::GiveLevel(uint8 level)
     InitTalentForLevel();
     InitTaxiNodesForLevel();
     InitGlyphsForLevel();
-    AddXPScalingAura();
+    AddScalingAuras();
     LearnLevelupSpells();
 
     UpdateAllStats();
@@ -17760,7 +17760,7 @@ bool Player::LoadFromDB(ObjectGuid guid, CharacterDatabaseQueryHolder const& hol
     InitTalentForLevel();
     LearnDefaultSkills();
     LearnCustomSpells();
-    AddXPScalingAura();
+    AddScalingAuras();
     LearnLevelupSpells();
 
     // must be before inventory (some items required reputation check)
@@ -23010,7 +23010,7 @@ void Player::ResetSpells(bool myClassOnly)
     LearnDefaultSkills();
     LearnCustomSpells();
     LearnQuestRewardedSpells();
-    AddXPScalingAura();
+    AddScalingAuras();
     LearnLevelupSpells();
 }
 
@@ -23034,16 +23034,24 @@ void Player::LearnCustomSpells()
     }
 }
 
-void Player::AddXPScalingAura()
+void Player::AddScalingAuras()
 {
     // Done to reapply aura, as aura does not scale with realpointsperlevel except for on apply
-    if (HasSpell(81000))
+    if (HasSpell(81000)) // xp aura
     {
         RemoveSpell(81000, false, false);
         LearnSpell(81000, false);
     }
     else
         LearnSpell(81000, false);
+
+    if (HasSpell(81001)) // damage & healing scaling aura
+    {
+        RemoveSpell(81001, false, false);
+        LearnSpell(81001, false);
+    }
+    else
+        LearnSpell(81001, false);
 }
 
 void Player::LearnLevelupSpells()

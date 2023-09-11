@@ -1434,7 +1434,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         void RemoveSpell(uint32 spell_id, bool disabled = false, bool learn_low_rank = true);
         void ResetSpells(bool myClassOnly = false);
         void LearnCustomSpells();
-        void AddXPScalingAura();
+        void AddScalingAuras();
         void LearnLevelupSpells();
         void LearnDefaultSkills();
         void LearnDefaultSkill(uint32 skillId, uint16 rank);
