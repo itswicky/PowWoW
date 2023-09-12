@@ -32,6 +32,7 @@
 #include "SpellMgr.h"
 #include "SpellScript.h"
 #include "Unit.h"
+#include "WorldSession.h"
 
 enum ShamanSpells
 {
@@ -93,6 +94,11 @@ enum ShamanSpells
     SPELL_SHAMAN_MAELSTROM_POWER                = 70831,
     SPELL_SHAMAN_T10_ENHANCEMENT_4P_BONUS       = 70832,
     SPELL_SHAMAN_BLESSING_OF_THE_ETERNALS_R1    = 51554,
+    SPELL_SHAMAN_ELEMENTAL_BOND                 = 91257,
+    SPELL_SHAMAN_BOND_FIRE                      = 91258,
+    SPELL_SHAMAN_BOND_EARTH                     = 91259,
+    SPELL_SHAMAN_BOND_AIR                       = 91260,
+    SPELL_SHAMAN_BOND_WATER                     = 91261,
 };
 
 enum ShamanSpellIcons
@@ -1897,6 +1903,67 @@ class spell_sha_windfury_weapon : public AuraScript
     }
 };
 
+// 91257 - Elemental Bond
+class spell_sha_elemental_bond : public SpellScript
+{
+    PrepareSpellScript(spell_sha_elemental_bond);
+
+    bool Validate(SpellInfo const* spellInfo) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_ELEMENTAL_BOND });
+    }
+
+    SpellCastResult CheckTotem()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        Unit* target = GetExplTargetUnit();
+
+        if (!target || !target->IsTotem())
+            return SPELL_FAILED_NO_VALID_TARGETS;
+        else
+            for (uint8 slot = SUMMON_SLOT_TOTEM_FIRE; slot < MAX_TOTEM_SLOT; ++slot)
+            {
+                if (!caster->m_SummonSlot[slot])
+                    continue;
+
+                Creature* totem = caster->GetMap()->GetCreature(caster->m_SummonSlot[slot]);
+                if (!caster->IsWithinDistInMap(totem, caster->GetSpellMaxRangeForTarget(totem, GetSpellInfo())))
+                    return SPELL_FAILED_OUT_OF_RANGE;
+                if (totem && totem->IsTotem())
+                    return SPELL_CAST_OK;
+            }
+
+        return SPELL_FAILED_NO_VALID_TARGETS;
+    }
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        Unit* target = GetExplTargetUnit();
+        Creature* fireTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_FIRE]);
+        Creature* earthTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_EARTH]);
+        Creature* waterTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_WATER]);
+        Creature* airTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_AIR]);
+
+        if (target == fireTotem)
+            caster->CastSpell(caster, SPELL_SHAMAN_BOND_FIRE);
+        else if (target == earthTotem)
+            caster->CastSpell(caster, SPELL_SHAMAN_BOND_EARTH);
+        else if (target == waterTotem)
+            caster->CastSpell(caster, SPELL_SHAMAN_BOND_WATER);
+        else if (target == airTotem)
+            caster->CastSpell(caster, SPELL_SHAMAN_BOND_AIR);
+        else
+            return;
+    }
+
+    void Register() override
+    {
+        OnCheckCast += SpellCheckCastFn(spell_sha_elemental_bond::CheckTotem);
+        OnEffectHitTarget += SpellEffectFn(spell_sha_elemental_bond::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_ancestral_awakening);
@@ -1950,4 +2017,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_t10_elemental_4p_bonus);
     RegisterSpellScript(spell_sha_t10_restoration_4p_bonus);
     RegisterSpellScript(spell_sha_windfury_weapon);
+    RegisterSpellScript(spell_sha_elemental_bond);
 }

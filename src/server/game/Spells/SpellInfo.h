@@ -140,7 +140,8 @@ enum SpellSpecificType
     SPELL_SPECIFIC_WARRIOR_ENRAGE                = 26,
     SPELL_SPECIFIC_PRIEST_DIVINE_SPIRIT          = 27,
     SPELL_SPECIFIC_HAND                          = 28,
-    SPELL_SPECIFIC_WEAPON_IMBUE                  = 29
+    SPELL_SPECIFIC_WEAPON_IMBUE                  = 29,
+    SPELL_SPECIFIC_SHAMAN_BOND                   = 30
 };
 
 enum SpellCustomAttributes

@@ -1435,6 +1435,7 @@ bool SpellInfo::IsAuraExclusiveBySpecificPerCasterWith(SpellInfo const* spellInf
         case SPELL_SPECIFIC_JUDGEMENT:
         case SPELL_SPECIFIC_WARLOCK_CORRUPTION:
         case SPELL_SPECIFIC_WEAPON_IMBUE:
+        case SPELL_SPECIFIC_SHAMAN_BOND:
             return spellSpec == spellInfo->GetSpellSpecific();
         default:
             return false;
@@ -2196,6 +2197,9 @@ void SpellInfo::_LoadSpellSpecific()
 
                 if (SpellFamilyFlags[2] & 0x8000)
                     return SPELL_SPECIFIC_WEAPON_IMBUE;
+
+                if (SpellFamilyFlags[1] & 0x4)
+                    return SPELL_SPECIFIC_SHAMAN_BOND;
 
                 break;
             }
