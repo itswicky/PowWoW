@@ -2125,11 +2125,19 @@ void Spell::EffectSummonType()
                     if (m_spellInfo->Id == 16190)
                         damage = unitCaster->CountPctFromMaxHealth(10);
 
+                    // Implement effects of Totemic Focus: Health scaling and threat redirect
+                    if (unitCaster->HasAura(91256)) // Totemic Focus
+                    {
+                        summon->GetThreatManager().RegisterRedirectThreat(m_spellInfo->Id, unitCaster->GetGUID(), 55);
+                        damage += unitCaster->CountPctFromMaxHealth(20);
+                    }
+
                     if (damage)                                            // if not spell info, DB values used
                     {
                         summon->SetMaxHealth(damage);
                         summon->SetHealth(damage);
                     }
+
                     break;
                 }
                 case SUMMON_TYPE_MINIPET:
