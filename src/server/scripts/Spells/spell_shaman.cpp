@@ -99,6 +99,11 @@ enum ShamanSpells
     SPELL_SHAMAN_BOND_EARTH                     = 91259,
     SPELL_SHAMAN_BOND_AIR                       = 91260,
     SPELL_SHAMAN_BOND_WATER                     = 91261,
+    SPELL_SHAMAN_AWAKEN_ELEMENTS                = 91262,
+    SPELL_SHAMAN_AWAKEN_FIRE                    = 91263,
+    SPELL_SHAMAN_AWAKEN_EARTH                   = 91264,
+    SPELL_SHAMAN_AWAKEN_WATER                   = 91265,
+    SPELL_SHAMAN_AWAKEN_AIR                     = 91266,
 };
 
 enum ShamanSpellIcons
@@ -1964,6 +1969,129 @@ class spell_sha_elemental_bond : public SpellScript
     }
 };
 
+// 91262 Awaken Elements
+class spell_sha_awaken_elements : public SpellScript
+{
+    PrepareSpellScript(spell_sha_awaken_elements);
+
+    bool Validate(SpellInfo const* spellInfo) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_AWAKEN_ELEMENTS });
+    }
+
+    SpellCastResult CheckTotem()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        Unit* target = GetExplTargetUnit();
+        bool fireBond = caster->HasAura(SPELL_SHAMAN_BOND_FIRE);
+        bool earthBond = caster->HasAura(SPELL_SHAMAN_BOND_EARTH);
+        bool waterBond = caster->HasAura(SPELL_SHAMAN_BOND_WATER);
+        bool airBond = caster->HasAura(SPELL_SHAMAN_BOND_AIR);
+        SpellInfo const* fireRange = sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_AWAKEN_FIRE);
+
+        if (!fireBond && !earthBond && !waterBond && !airBond)
+        {
+            caster->GetSession()->SendNotification("You must have an Elemental Bond.");
+            return SPELL_FAILED_DONT_REPORT;
+        }
+        if (fireBond)
+        {
+            if (Creature* fireTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_FIRE]))
+            {
+                if (!target->IsValidAttackTarget(caster))
+                {
+                    caster->GetSession()->SendNotification("Your totem cannot attack that target.");
+                    return SPELL_FAILED_CUSTOM_ERROR;
+                }
+                else if (!fireTotem->IsWithinDistInMap(target, caster->GetSpellMaxRangeForTarget(fireTotem, fireRange)))
+                {
+                    caster->GetSession()->SendNotification("Your totem is not in range.");
+                    return SPELL_FAILED_CUSTOM_ERROR;
+                }                
+                else
+                    return SPELL_CAST_OK;
+            }
+            else
+            {
+                SetCustomCastResultMessage(SPELL_CUSTOM_ERROR_MUST_HAVE_FIRE_TOTEM);
+                return SPELL_FAILED_CUSTOM_ERROR;
+            }
+        }
+        else if (earthBond)
+        {
+            if (Creature* earthTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_EARTH]))
+                return SPELL_CAST_OK;
+            else
+            {
+                caster->GetSession()->SendNotification("You must have an Earth Totem active.");
+                return SPELL_FAILED_CUSTOM_ERROR;
+            }
+        }
+        else if (waterBond)
+        {
+            if (Creature* waterTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_WATER]))
+                return SPELL_CAST_OK;
+            else
+            {
+                caster->GetSession()->SendNotification("You must have a Water Totem active.");
+                return SPELL_FAILED_CUSTOM_ERROR;
+            }
+        }
+        else if (airBond)
+        {
+            if (Creature* airTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_AIR]))
+                return SPELL_CAST_OK;
+            else
+            {
+                caster->GetSession()->SendNotification("You must have an Air Totem active.");
+                return SPELL_FAILED_CUSTOM_ERROR;
+            }
+        }
+        else
+            return SPELL_FAILED_NO_VALID_TARGETS;
+    }
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        Unit* target = GetExplTargetUnit();
+        bool fireBond = caster->HasAura(SPELL_SHAMAN_BOND_FIRE);
+        bool earthBond = caster->HasAura(SPELL_SHAMAN_BOND_EARTH);
+        bool waterBond = caster->HasAura(SPELL_SHAMAN_BOND_WATER);
+        bool airBond = caster->HasAura(SPELL_SHAMAN_BOND_AIR);
+        Creature* fireTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_FIRE]);
+        Creature* earthTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_EARTH]);
+        Creature* waterTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_WATER]);
+        Creature* airTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_AIR]);
+
+        if (!fireBond && !earthBond && !waterBond && !airBond)
+            return;
+
+        if (fireBond)
+        {
+            fireTotem->CastSpell(target, SPELL_SHAMAN_AWAKEN_FIRE);
+            caster->GetSpellHistory()->ModifyCooldown(SPELL_SHAMAN_AWAKEN_ELEMENTS, -(12 * IN_MILLISECONDS));
+        }
+        else if (earthBond)
+            earthTotem->CastSpell(earthTotem, SPELL_SHAMAN_AWAKEN_EARTH);
+        else if (waterBond)
+        {
+            waterTotem->CastSpell(waterTotem, SPELL_SHAMAN_AWAKEN_WATER);
+            caster->GetSpellHistory()->ModifyCooldown(SPELL_SHAMAN_AWAKEN_ELEMENTS, -(12 * IN_MILLISECONDS));
+        }
+        else if (airBond)
+            airTotem->CastSpell(airTotem, SPELL_SHAMAN_AWAKEN_AIR);
+        else
+            return;
+    }
+
+    void Register() override
+    {
+        OnCheckCast += SpellCheckCastFn(spell_sha_awaken_elements::CheckTotem);
+        OnEffectHitTarget += SpellEffectFn(spell_sha_awaken_elements::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_ancestral_awakening);
@@ -2018,4 +2146,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_t10_restoration_4p_bonus);
     RegisterSpellScript(spell_sha_windfury_weapon);
     RegisterSpellScript(spell_sha_elemental_bond);
+    RegisterSpellScript(spell_sha_awaken_elements);
 }
