@@ -627,6 +627,8 @@ bool Unit::IsWithinMeleeRangeAt(Position const& pos, Unit const* obj) const
 float Unit::GetMeleeRange(Unit const* target) const
 {
     float range = GetCombatReach() + target->GetCombatReach() + 4.0f / 3.0f;
+    if (HasAura(91201))
+        range += 15.0f;
     return std::max(range, NOMINAL_MELEE_RANGE);
 }
 
