@@ -621,6 +621,10 @@ bool Unit::IsWithinMeleeRangeAt(Position const& pos, Unit const* obj) const
 
     float maxdist = GetMeleeRange(obj);
 
+    // Can edit Player auto attack range here
+    //if (IsPlayer() && HasAura(91201))
+        //maxdist += 5.0f;
+
     return distsq <= maxdist * maxdist;
 }
 
