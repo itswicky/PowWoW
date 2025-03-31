@@ -1978,7 +1978,7 @@ void Player::SetObjectScale(float scale)
 {
     Unit::SetObjectScale(scale);
     SetBoundingRadius(scale * DEFAULT_PLAYER_BOUNDING_RADIUS);
-    SetCombatReach(scale * DEFAULT_PLAYER_COMBAT_REACH);
+    SetCombatReach(scale * 5.0f);
 }
 
 bool Player::IsImmunedToSpellEffect(SpellInfo const* spellInfo, SpellEffectInfo const& spellEffectInfo, WorldObject const* caster,
