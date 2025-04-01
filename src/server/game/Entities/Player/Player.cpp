@@ -23045,13 +23045,14 @@ void Player::AddScalingAuras()
     else
         LearnSpell(81000, false);
 
-    if (HasSpell(81001)) // damage & healing scaling aura
+    // Scaling now done manually through db and dbc
+    /*if (HasSpell(81001)) // damage & healing scaling aura
     {
         RemoveSpell(81001, false, false);
         LearnSpell(81001, false);
     }
     else
-        LearnSpell(81001, false);
+        LearnSpell(81001, false);*/
 }
 
 void Player::LearnLevelupSpells()
