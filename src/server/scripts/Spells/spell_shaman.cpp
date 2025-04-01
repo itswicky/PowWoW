@@ -1992,7 +1992,7 @@ class spell_sha_awaken_elements : public SpellScript
         if (!fireBond && !earthBond && !waterBond && !airBond)
         {
             caster->GetSession()->SendNotification("You must have an Elemental Bond.");
-            return SPELL_FAILED_DONT_REPORT;
+            return SPELL_FAILED_CUSTOM_ERROR;
         }
         if (fireBond)
         {
