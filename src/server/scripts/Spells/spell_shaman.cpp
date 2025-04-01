@@ -2007,7 +2007,9 @@ class spell_sha_awaken_elements : public SpellScript
                 {
                     caster->GetSession()->SendNotification("Your totem is not in range.");
                     return SPELL_FAILED_CUSTOM_ERROR;
-                }                
+                }
+                else if (!caster->IsWithinLOSInMap(target))
+                    return SPELL_FAILED_LINE_OF_SIGHT;
                 else
                     return SPELL_CAST_OK;
             }
@@ -2030,7 +2032,10 @@ class spell_sha_awaken_elements : public SpellScript
         else if (waterBond)
         {
             if (Creature* waterTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_WATER]))
-                return SPELL_CAST_OK;
+                if (!caster->IsWithinLOSInMap(target))
+                    return SPELL_FAILED_LINE_OF_SIGHT;
+                else
+                    return SPELL_CAST_OK;
             else
             {
                 caster->GetSession()->SendNotification("You must have a Water Totem active.");
