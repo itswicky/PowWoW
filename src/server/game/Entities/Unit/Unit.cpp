@@ -789,6 +789,7 @@ bool Unit::HasBreakableByDamageCrowdControlAura(Unit* excludeCasterChannel) cons
     }
 
     // Rage from Damage made (only from direct weapon damage)
+    // @Itswicky Note to edit in future
     if (attacker && cleanDamage && damagetype == DIRECT_DAMAGE && attacker != victim && attacker->GetPowerType() == POWER_RAGE)
     {
         uint32 weaponSpeedHitFactor;
@@ -812,6 +813,7 @@ bool Unit::HasBreakableByDamageCrowdControlAura(Unit* excludeCasterChannel) cons
         }
     }
 
+    // @Itswicky Note to edit in future
     if (!damage)
     {
         // Rage from absorbed damage
