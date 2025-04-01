@@ -23061,6 +23061,7 @@ void Player::LearnLevelupSpells()
     ASSERT(info);
     for (PlayerLevelupSpells::const_iterator itr = info->levelupSpells.begin(); itr != info->levelupSpells.end(); ++itr)
     {
+        Unit* caster = this;
         uint32 plevel = GetLevel();
         uint32 spell = itr->Spell;
         uint32 slevel = itr->level;
@@ -23077,8 +23078,8 @@ void Player::LearnLevelupSpells()
         if (slevel == 100)
         {
             RemoveSpell(spell, false, false);
-            if (this->HasAura(spell))
-                this->RemoveAura(spell);
+            if (caster->HasAura(spell))
+                caster->RemoveAura(spell);
         }
 
         // if we are not yet high enough level, already know the spell, or do not have the requisite spell, ignore

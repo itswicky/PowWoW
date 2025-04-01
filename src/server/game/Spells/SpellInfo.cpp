@@ -421,7 +421,7 @@ int32 SpellEffectInfo::CalcValue(WorldObject const* caster /*= nullptr*/, int32 
         if ((Effect == SPELL_EFFECT_SCHOOL_DAMAGE || Effect == SPELL_EFFECT_HEAL || ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE || ApplyAuraName == SPELL_AURA_PERIODIC_HEAL || Effect == SPELL_EFFECT_ENERGIZE // Generic damage and healing effects
             || _spellInfo->GetSpellSpecific() == SPELL_SPECIFIC_WEAPON_IMBUE)   // Flametongue Weapon
             && maxSpellLevel != 0                                               // if maxlevel or level = 0 we divide by 0
-            && caster->IsPlayer())                                              // only if caster is a player
+            && caster->IsPlayer() || casterUnit->IsControlledByPlayer())        // only if caster is a player or is a pet/minion
         {
             ++level;
             basePoints += int32(level * level * basePointsPerLevel / maxSpellLevel);
