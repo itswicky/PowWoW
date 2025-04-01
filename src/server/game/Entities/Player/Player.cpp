@@ -23073,6 +23073,10 @@ void Player::LearnLevelupSpells()
         if ((plevel < slevel) && HasSpell(spell) || (!hasrspell && HasSpell(spell))) // remove spell from player if they do not meet level requirement or spell requirement, but somehow they have the spell. currently only gm .level -x
             RemoveSpell(spell, false, false);
 
+        // Work around to remove certain spell/auras granted by talents
+        if (slevel == 100)
+            RemoveSpell(spell, false, false);
+
         // if we are not yet high enough level, already know the spell, or do not have the requisite spell, ignore
         if (plevel < slevel || HasSpell(spell) || !hasrspell)
             continue;
