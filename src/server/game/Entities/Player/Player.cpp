@@ -23075,7 +23075,11 @@ void Player::LearnLevelupSpells()
 
         // Work around to remove certain spell/auras granted by talents
         if (slevel == 100)
+        {
             RemoveSpell(spell, false, false);
+            if (this->HasAura(spell))
+                this->RemoveAura(spell);
+        }
 
         // if we are not yet high enough level, already know the spell, or do not have the requisite spell, ignore
         if (plevel < slevel || HasSpell(spell) || !hasrspell)
