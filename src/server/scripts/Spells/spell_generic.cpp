@@ -4566,6 +4566,17 @@ class spell_gen_submerged : public SpellScript
     }
 };
 
+enum SpellsToRemove
+{
+    BOND_FIRE           = 91258,
+    BOND_EARTH          = 91259,
+    BOND_AIR            = 91260,
+    BOND_WATER          = 91261
+};
+
+// List of Auras granted by other spells/talents to be removed. TODO: move to database table
+static constexpr std::array<uint32, 4> SPELLS_TO_REMOVE = { BOND_FIRE, BOND_EARTH, BOND_AIR, BOND_WATER };
+
 // Specializations
 class spell_gen_class_specialization : public AuraScript
 {
@@ -4574,20 +4585,28 @@ class spell_gen_class_specialization : public AuraScript
     void OnApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         Player* player = GetTarget()->ToPlayer();
-        if (player)
-            player->LearnLevelupSpells();
+        if (!player)
+            return;
+
+        player->LearnLevelupSpells();
     }
 
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         Player* player = GetTarget()->ToPlayer();
-        if (player)
-            player->LearnLevelupSpells();
+        if (!player)
+            return;
+
+        player->LearnLevelupSpells();
+
+        for (uint32 spellId : SPELLS_TO_REMOVE)
+            if (player->HasAura(spellId))
+                player->RemoveAura(spellId);
     }
 
     void Register() override
     {
-        AfterEffectApply += AuraEffectRemoveFn(spell_gen_class_specialization::OnApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectApply += AuraEffectApplyFn(spell_gen_class_specialization::OnApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
         AfterEffectRemove += AuraEffectRemoveFn(spell_gen_class_specialization::OnRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
     }
 };
