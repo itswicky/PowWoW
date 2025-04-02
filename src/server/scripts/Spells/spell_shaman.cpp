@@ -1988,6 +1988,7 @@ class spell_sha_awaken_elements : public SpellScript
         bool waterBond = caster->HasAura(SPELL_SHAMAN_BOND_WATER);
         bool airBond = caster->HasAura(SPELL_SHAMAN_BOND_AIR);
         SpellInfo const* fireRange = sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_AWAKEN_FIRE);
+        SpellInfo const* waterRange = sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_AWAKEN_WATER);
 
         if (!fireBond && !earthBond && !waterBond && !airBond)
         {
@@ -2019,6 +2020,24 @@ class spell_sha_awaken_elements : public SpellScript
                 return SPELL_FAILED_CUSTOM_ERROR;
             }
         }
+        else if (waterBond)
+        {
+            if (Creature* waterTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_WATER]))
+                if (!caster->IsWithinLOSInMap(target))
+                    return SPELL_FAILED_LINE_OF_SIGHT;
+                else if (!waterTotem->IsWithinDistInMap(target, caster->GetSpellMaxRangeForTarget(waterTotem, waterRange)))
+                {
+                    caster->GetSession()->SendNotification("Your totem is not in range.");
+                    return SPELL_FAILED_CUSTOM_ERROR;
+                }
+                else
+                    return SPELL_CAST_OK;
+            else
+            {
+                caster->GetSession()->SendNotification("You must have a Water Totem active.");
+                return SPELL_FAILED_CUSTOM_ERROR;
+            }
+        }
         else if (earthBond)
         {
             if (Creature* earthTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_EARTH]))
@@ -2026,19 +2045,6 @@ class spell_sha_awaken_elements : public SpellScript
             else
             {
                 caster->GetSession()->SendNotification("You must have an Earth Totem active.");
-                return SPELL_FAILED_CUSTOM_ERROR;
-            }
-        }
-        else if (waterBond)
-        {
-            if (Creature* waterTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_WATER]))
-                if (!caster->IsWithinLOSInMap(target))
-                    return SPELL_FAILED_LINE_OF_SIGHT;
-                else
-                    return SPELL_CAST_OK;
-            else
-            {
-                caster->GetSession()->SendNotification("You must have a Water Totem active.");
                 return SPELL_FAILED_CUSTOM_ERROR;
             }
         }
@@ -2081,7 +2087,30 @@ class spell_sha_awaken_elements : public SpellScript
             earthTotem->CastSpell(earthTotem, SPELL_SHAMAN_AWAKEN_EARTH);
         else if (waterBond)
         {
-            waterTotem->CastSpell(waterTotem, SPELL_SHAMAN_AWAKEN_WATER);
+            Unit* target = nullptr;
+            float lowestHealthPct = 100.0f;
+            // Define the spell range
+            float range = 40.0f; // Adjust based on spell range
+
+            std::list<Unit*> TargetList;
+            Trinity::AnyFriendlyUnitInObjectRangeCheck checker(caster, caster, range);
+            Trinity::UnitListSearcher<Trinity::AnyFriendlyUnitInObjectRangeCheck> searcher(caster, TargetList, checker);
+            Cell::VisitAllObjects(caster, searcher, range);
+            for (std::list<Unit*>::iterator itr = TargetList.begin(); itr != TargetList.end(); ++itr)
+                if ((*itr)->GetHealthPct() < lowestHealthPct)
+                {
+                    lowestHealthPct = (*itr)->GetHealthPct();
+                    target = *itr;
+                }
+
+            // If we found a valid target, cast the spell on them
+            if (target)
+                waterTotem->CastSpell(target, SPELL_SHAMAN_AWAKEN_WATER);
+            else
+                // Default to self-casting if no valid target found
+                waterTotem->CastSpell(waterTotem, SPELL_SHAMAN_AWAKEN_WATER);
+
+            // Reduce cooldown for the caster
             caster->GetSpellHistory()->ModifyCooldown(SPELL_SHAMAN_AWAKEN_ELEMENTS, -(12 * IN_MILLISECONDS));
         }
         else if (airBond)
