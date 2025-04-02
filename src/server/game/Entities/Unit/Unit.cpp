@@ -6228,7 +6228,7 @@ void Unit::SetCharm(Unit* charm, bool apply)
 bool Unit::IsMagnet() const
 {
     // Grounding Totem
-    if (GetUInt32Value(UNIT_CREATED_BY_SPELL) == 8177) /// @todo: find a more generic solution
+    if (GetUInt32Value(UNIT_CREATED_BY_SPELL) == 8177 || GetUInt32Value(UNIT_CREATED_BY_SPELL) == 91273) /// @todo: find a more generic solution
         return true;
 
     return false;
