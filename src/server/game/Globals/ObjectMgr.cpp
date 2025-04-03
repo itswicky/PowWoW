@@ -293,7 +293,7 @@ void ObjectMgr::LoadLevelupSpells()
 {
     uint32 oldMSTime = getMSTime();
 
-    QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell, level, Required1, Required2, Required3, FROM player_levelup_spells");
+    QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell, level, Required1, Required2, Required3 FROM player_levelup_spells");
 
     if (!result)
     {
@@ -365,7 +365,7 @@ void ObjectMgr::LoadAfflictions()
 {
     uint32 oldMSTime = getMSTime();
 
-    QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell, level, Required1, Required2, Required3, FROM player_levelup_spells");
+    QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell, level, Required1, Required2, Required3 FROM player_levelup_spells");
 
     if (!result)
     {
@@ -4165,7 +4165,7 @@ void ObjectMgr::LoadLevelupInfo()
     {
         uint32 oldMSTime = getMSTime();
 
-        QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell, level, Required1, Required2, Required3, FROM player_levelup_spells");
+        QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell, level, Required1, Required2, Required3 FROM player_levelup_spells");
 
         if (!result)
         {
