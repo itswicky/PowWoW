@@ -462,7 +462,7 @@ int32 SpellEffectInfo::CalcValue(WorldObject const* caster /*= nullptr*/, int32 
         _spellInfo->MaxLevel == 60 &&
         !_spellInfo->HasAttribute(SPELL_ATTR4_FIXED_DAMAGE) &&
         !_spellInfo->HasAttribute(SPELL_ATTR4_DAMAGE_DOESNT_BREAK_AURAS))
-        value *= frand(0.9f, 1.1f);
+        value *= frand(0.95f, 1.05f);
 
     if (caster)
         value = caster->ApplyEffectModifiers(_spellInfo, EffectIndex, value);;
