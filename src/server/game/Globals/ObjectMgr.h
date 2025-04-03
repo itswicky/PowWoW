@@ -689,7 +689,9 @@ struct PlayerLevelupSpell
 {
     uint32 Spell;
     uint8 level;    
-    uint32 requiredSpell;
+    uint32 requiredSpell1;
+    uint32 requiredSpell2;
+    uint32 requiredSpell3;
 };
 
 typedef std::vector<PlayerLevelupSpell> PlayerLevelupSpells;

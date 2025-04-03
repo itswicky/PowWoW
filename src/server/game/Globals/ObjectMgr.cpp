@@ -293,7 +293,7 @@ void ObjectMgr::LoadLevelupSpells()
 {
     uint32 oldMSTime = getMSTime();
 
-    QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell, level, Required FROM player_levelup_spells");
+    QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell, level, Required1, Required2, Required3, FROM player_levelup_spells");
 
     if (!result)
     {
@@ -311,7 +311,9 @@ void ObjectMgr::LoadLevelupSpells()
             PlayerLevelupSpell levelup;
             levelup.Spell = fields[2].GetUInt32();
             levelup.level = fields[3].GetUInt8();
-            levelup.requiredSpell = fields[4].GetUInt32();
+            levelup.requiredSpell1 = fields[4].GetUInt32();
+            levelup.requiredSpell2 = fields[5].GetUInt32();
+            levelup.requiredSpell3 = fields[6].GetUInt32();
 
             if (raceMask != 0 && !(raceMask & RACEMASK_ALL_PLAYABLE))
             {
@@ -363,7 +365,7 @@ void ObjectMgr::LoadAfflictions()
 {
     uint32 oldMSTime = getMSTime();
 
-    QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell, level, Required FROM player_levelup_spells");
+    QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell, level, Required1, Required2, Required3, FROM player_levelup_spells");
 
     if (!result)
     {
@@ -381,7 +383,9 @@ void ObjectMgr::LoadAfflictions()
             PlayerLevelupSpell levelup;
             levelup.Spell = fields[2].GetUInt32();
             levelup.level = fields[3].GetUInt8();
-            levelup.requiredSpell = fields[4].GetUInt32();
+            levelup.requiredSpell1 = fields[4].GetUInt32();
+            levelup.requiredSpell2 = fields[5].GetUInt32();
+            levelup.requiredSpell3 = fields[6].GetUInt32();
 
             if (raceMask != 0 && !(raceMask & RACEMASK_ALL_PLAYABLE))
             {
@@ -4161,7 +4165,7 @@ void ObjectMgr::LoadLevelupInfo()
     {
         uint32 oldMSTime = getMSTime();
 
-        QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell, level, Required FROM player_levelup_spells");
+        QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell, level, Required1, Required2, Required3, FROM player_levelup_spells");
 
         if (!result)
         {
@@ -4179,7 +4183,9 @@ void ObjectMgr::LoadLevelupInfo()
                 PlayerLevelupSpell levelup;
                 levelup.Spell = fields[2].GetUInt32();
                 levelup.level = fields[3].GetUInt8();
-                levelup.requiredSpell = fields[4].GetUInt32();
+                levelup.requiredSpell1 = fields[4].GetUInt32();
+                levelup.requiredSpell2 = fields[5].GetUInt32();
+                levelup.requiredSpell3 = fields[6].GetUInt32();
 
                 if (raceMask != 0 && !(raceMask & RACEMASK_ALL_PLAYABLE))
                 {

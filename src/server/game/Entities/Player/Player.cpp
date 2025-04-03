@@ -23065,11 +23065,13 @@ void Player::LearnLevelupSpells()
         uint32 plevel = GetLevel();
         uint32 spell = itr->Spell;
         uint32 slevel = itr->level;
-        uint32 rspell = itr->requiredSpell;
+        uint32 rspell1 = itr->requiredSpell1;
+        uint32 rspell2 = itr->requiredSpell2;
+        uint32 rspell3 = itr->requiredSpell3;
         bool hasrspell = true;
 
-        if (rspell != 0)
-            hasrspell = HasSpell(rspell);
+        if (rspell1 != 0 || rspell2 != 0 || rspell3 != 0)
+            hasrspell = (HasSpell(rspell1) || HasSpell(rspell2) || HasSpell(rspell3));
 
         if ((plevel < slevel) && HasSpell(spell) || (!hasrspell && HasSpell(spell))) // remove spell from player if they do not meet level requirement or spell requirement, but somehow they have the spell. currently only gm .level -x
             RemoveSpell(spell, false, false);
