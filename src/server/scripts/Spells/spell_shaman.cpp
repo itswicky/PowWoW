@@ -1932,12 +1932,19 @@ class spell_sha_windfury_weapon2 : public AuraScript
         if (!player)
             return false;
 
-        Item* item = player->GetItemByGuid(GetAura()->GetCastItemGUID());
-        if (!item || !item->IsEquipped())
+        WeaponAttackType attType;
+        
+        // Determine which hand triggered the proc
+        if (eventInfo.GetTypeMask() & PROC_FLAG_DONE_MAINHAND_ATTACK)
+            attType = BASE_ATTACK;
+        else if (eventInfo.GetTypeMask() & PROC_FLAG_DONE_OFFHAND_ATTACK)
+            attType = OFF_ATTACK;
+        else
             return false;
 
-        WeaponAttackType attType = static_cast<WeaponAttackType>(player->GetAttackBySlot(item->GetSlot()));
-        if (attType != BASE_ATTACK && attType != OFF_ATTACK)
+        // Get the item in the corresponding hand
+        Item* item = player->GetWeaponForAttack(attType);
+        if (!item || !item->IsEquipped())
             return false;
 
         if (((attType == BASE_ATTACK) && !(eventInfo.GetTypeMask() & PROC_FLAG_DONE_MAINHAND_ATTACK)) ||
