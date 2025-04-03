@@ -107,6 +107,8 @@ enum ShamanSpells
     SPELL_SHAMAN_WINDFURY_NEW                   = 91305,
     SPELL_SHAMAN_WINDFURY_ATTACK_MH_NEW         = 91307,
     SPELL_SHAMAN_WINDFURY_ATTACK_OH_NEW         = 91308,
+    SPELL_SHAMAN_LIGHTNING_BOLT_OVERLOAD        = 91322,
+    SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD       = 91323
 };
 
 enum ShamanSpellIcons
@@ -975,6 +977,55 @@ class spell_sha_lightning_overload : public AuraScript
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(spell_sha_lightning_overload::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
+// 91321 - Lightning Overload custom
+class spell_sha_lightning_overload2 : public AuraScript
+{
+    PrepareAuraScript(spell_sha_lightning_overload2);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo(
+            {
+                SPELL_SHAMAN_LIGHTNING_BOLT_OVERLOAD,
+                SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD
+            });
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+
+        SpellInfo const* spellInfo = eventInfo.GetSpellInfo();
+        if (!spellInfo)
+            return;
+
+        uint32 spellId;
+
+        // Lightning Bolt
+        if (spellInfo->SpellFamilyFlags[0] & 0x00000001)
+            spellId = SPELL_SHAMAN_LIGHTNING_BOLT_OVERLOAD;
+        // Chain Lightning
+        else
+        {
+            // Chain lightning has [LightOverload_Proc_Chance] / [Max_Number_of_Targets] chance to proc of each individual target hit.
+            // A maxed LO would have a 33% / 3 = 11% chance to proc of each target.
+            // LO chance was already "accounted" at the proc chance roll, now need to divide the chance by [Max_Number_of_Targets]
+            float chance = 100.0f / spellInfo->GetEffect(EFFECT_0).ChainTarget;
+            if (!roll_chance_f(chance))
+                return;
+
+            spellId = SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD;
+        }
+
+        eventInfo.GetActor()->CastSpell(eventInfo.GetProcTarget(), spellId, aurEff);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_sha_lightning_overload2::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2304,4 +2355,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_awaken_elements);
     RegisterSpellScript(spell_sha_windfury_weapon2);
     RegisterSpellScript(spell_sha_lava_lash2);
+    RegisterSpellScript(spell_sha_lightning_overload2);
 }
