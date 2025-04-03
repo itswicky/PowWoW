@@ -104,6 +104,9 @@ enum ShamanSpells
     SPELL_SHAMAN_AWAKEN_EARTH                   = 91264,
     SPELL_SHAMAN_AWAKEN_WATER                   = 91265,
     SPELL_SHAMAN_AWAKEN_AIR                     = 91266,
+    SPELL_SHAMAN_WINDFURY_NEW                   = 91305,
+    SPELL_SHAMAN_WINDFURY_ATTACK_MH_NEW         = 91307,
+    SPELL_SHAMAN_WINDFURY_ATTACK_OH_NEW         = 91308,
 };
 
 enum ShamanSpellIcons
@@ -1908,6 +1911,85 @@ class spell_sha_windfury_weapon : public AuraScript
     }
 };
 
+// 91305 Custom Windfury
+class spell_sha_windfury_weapon2 : public AuraScript
+{
+    PrepareAuraScript(spell_sha_windfury_weapon2);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo(
+            {
+                SPELL_SHAMAN_WINDFURY_NEW,
+                SPELL_SHAMAN_WINDFURY_ATTACK_MH_NEW,
+                SPELL_SHAMAN_WINDFURY_ATTACK_OH_NEW
+            });
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Player* player = eventInfo.GetActor()->ToPlayer();
+        if (!player)
+            return false;
+
+        Item* item = player->GetItemByGuid(GetAura()->GetCastItemGUID());
+        if (!item || !item->IsEquipped())
+            return false;
+
+        WeaponAttackType attType = static_cast<WeaponAttackType>(player->GetAttackBySlot(item->GetSlot()));
+        if (attType != BASE_ATTACK && attType != OFF_ATTACK)
+            return false;
+
+        if (((attType == BASE_ATTACK) && !(eventInfo.GetTypeMask() & PROC_FLAG_DONE_MAINHAND_ATTACK)) ||
+            ((attType == OFF_ATTACK) && !(eventInfo.GetTypeMask() & PROC_FLAG_DONE_OFFHAND_ATTACK)))
+            return false;
+
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+
+        Player* player = eventInfo.GetActor()->ToPlayer();
+
+        uint32 spellId = 0;
+        WeaponAttackType attType = BASE_ATTACK;
+        if (eventInfo.GetTypeMask() & PROC_FLAG_DONE_MAINHAND_ATTACK)
+            spellId = SPELL_SHAMAN_WINDFURY_ATTACK_MH_NEW;
+
+        if (eventInfo.GetTypeMask() & PROC_FLAG_DONE_OFFHAND_ATTACK)
+        {
+            spellId = SPELL_SHAMAN_WINDFURY_ATTACK_OH_NEW;
+            attType = OFF_ATTACK;
+        }
+
+        Item* item = ASSERT_NOTNULL(player->GetWeaponForAttack(attType));
+
+        int32 extraAttackPower = 0;
+        SpellInfo const* spellInfo = sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_WINDFURY_NEW);
+        extraAttackPower = spellInfo->GetEffect(EFFECT_1).CalcValue(player);
+
+        if (!extraAttackPower)
+            return;
+
+        // Value gained from additional AP
+        int32 amount = static_cast<int32>(extraAttackPower / 14.f * player->GetAttackTime(attType) / 1000.f);
+
+        CastSpellExtraArgs args(aurEff);
+        args.AddSpellBP0(amount);
+        // Attack twice
+        for (uint8 i = 0; i < 2; ++i)
+            player->CastSpell(eventInfo.GetProcTarget(), spellId, args);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_sha_windfury_weapon2::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_sha_windfury_weapon2::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 // 91257 - Elemental Bond
 class spell_sha_elemental_bond : public SpellScript
 {
@@ -2181,4 +2263,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_windfury_weapon);
     RegisterSpellScript(spell_sha_elemental_bond);
     RegisterSpellScript(spell_sha_awaken_elements);
+    RegisterSpellScript(spell_sha_windfury_weapon2);
 }
