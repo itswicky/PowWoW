@@ -682,6 +682,22 @@ void Spell::EffectSchoolDMG()
                 }
                 break;
             }
+            case SPELLFAMILY_SHAMAN:
+            {
+                if (!unitCaster)
+                    break;
+
+                // Lava Burst - Erupting Force
+                if (m_spellInfo->SpellFamilyFlags[1] & 0x1000)
+                {
+                    if (unitCaster->HasAura(91324))
+                    {
+                        float critChance = unitCaster->SpellCritChanceDone(m_spellInfo, m_spellInfo->GetSchoolMask(), m_spellInfo->GetAttackType());
+                        damage *= int32(1 + critChance / 100);
+                    }
+                }
+                break;
+            }
         }
 
         if (unitCaster && damage > 0 && apply_direct_bonus)
