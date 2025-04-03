@@ -2051,6 +2051,38 @@ class spell_sha_elemental_bond : public SpellScript
     }
 };
 
+// 91312 - Lava Lash (Custom)
+class spell_sha_lava_lash2 : public SpellScript
+{
+    PrepareSpellScript(spell_sha_lava_lash2);
+
+    bool Load() override
+    {
+        return GetCaster()->GetTypeId() == TYPEID_PLAYER;
+    }
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            int32 damage = GetEffectValue();
+            int32 hitDamage = GetHitDamage();
+            if (Item* offhand = caster->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
+            {
+                // Damage is increased by 25% if your off-hand weapon is enchanted with Flametongue.
+                if (AuraEffect const* aurEff = caster->GetAuraEffect(SPELL_AURA_DUMMY, SPELLFAMILY_SHAMAN, 0x200000, 0, 0))
+                    AddPct(hitDamage, damage);  // Removed check for off-hand enchantment since we apply it as an aura now
+                SetHitDamage(hitDamage);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_sha_lava_lash2::HandleDummy, EFFECT_1, SPELL_EFFECT_DUMMY);
+    }
+};
+
 // 91262 Awaken Elements
 class spell_sha_awaken_elements : public SpellScript
 {
@@ -2264,4 +2296,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_elemental_bond);
     RegisterSpellScript(spell_sha_awaken_elements);
     RegisterSpellScript(spell_sha_windfury_weapon2);
+    RegisterSpellScript(spell_sha_lava_lash2);
 }

@@ -2122,7 +2122,7 @@ void Spell::EffectSummonType()
                         return;
 
                     // Mana Tide Totem
-                    if (m_spellInfo->Id == 16190)
+                    if (m_spellInfo->Id == 16190 || m_spellInfo->Id == 91317)
                         damage = unitCaster->CountPctFromMaxHealth(10);
 
                     // Implement effects of Totemic Focus: Health scaling and threat redirect
