@@ -375,6 +375,8 @@ class spell_sha_clearcasting : public AuraScript
         Unit const* owner = GetUnitOwner();
         if (Aura const* aura = owner->GetAuraOfRankedSpell(SPELL_SHAMAN_ELEMENTAL_OATH, owner->GetGUID()))
             amount = aura->GetSpellInfo()->GetEffect(EFFECT_1).CalcValue();
+        else if (Aura const* aura = owner->GetAura(91327))
+            amount = aura->GetSpellInfo()->GetEffect(EFFECT_0).CalcValue();
     }
 
     void Register() override
