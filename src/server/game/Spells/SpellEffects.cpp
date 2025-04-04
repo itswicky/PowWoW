@@ -692,8 +692,8 @@ void Spell::EffectSchoolDMG()
                 {
                     if (unitCaster->HasAura(91324))
                     {
-                        float critChance = unitCaster->SpellCritChanceDone(m_spellInfo, m_spellInfo->GetSchoolMask(), m_spellInfo->GetAttackType());
-                        damage *= int32(1 + critChance / 100);
+                        float critChance = unitCaster->SpellCritChanceDone(m_spellInfo, m_spellSchoolMask, m_attackType);
+                        damage *= 1 + critChance / 100;
                     }
                 }
                 break;
