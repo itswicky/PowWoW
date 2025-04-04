@@ -2158,26 +2158,47 @@ class spell_sha_flame_shock_2 : public SpellScript
     {
         Player* caster = GetCaster()->ToPlayer();
         Unit* target = GetExplTargetUnit();
-        if (caster)
-            if (target)
-                if (AuraEffect const* flameShock = target->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_SHAMAN, 0x10000000, 0x0, 0x0, caster->GetGUID())) // Check if caster's Flame Shock is already active on target
-                {
-                    // Check Flame Shock's current duration
-                    int32 countCurrent = flameShock->GetBase()->GetDuration();
-                    // Base max duration with modifiers
-                    int32 countMin = flameShock->GetBase()->GetMaxDuration();
-                    // The max time we will allow DoT to persist
-                    int32 countMax = countMin + (countMin / flameShock->GetTotalTicks()) * 2; // Can be extended by 2 additional ticks
+        if (!caster || !target)
+            return;
 
-                    // if current duration is less than max duration then we can extend
-                    if (countCurrent < countMax)
-                        if ((countCurrent + countMin) > countMax)
-                            flameShock->GetBase()->SetDuration(countMax);
-                        else
-                            flameShock->GetBase()->SetDuration(countCurrent + countMin);
-                }
-                else
-                    caster->CastSpell(target, SPELL_SHAMAN_FLAMESHOCK_DOT);
+        AuraEffect* flameShock = target->GetAuraEffect(
+            SPELL_AURA_PERIODIC_DAMAGE,
+            SPELLFAMILY_SHAMAN,
+            0x10000000, 0x0, 0x0,
+            caster->GetGUID());
+
+        // If no active Flame Shock DoT, apply it
+        if (!flameShock)
+        {
+            caster->CastSpell(target, SPELL_SHAMAN_FLAMESHOCK_DOT);
+            return;
+        }
+
+        Aura* aura = flameShock->GetBase();
+        SpellInfo const* flameShockDot = sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_FLAMESHOCK_DOT);
+
+        int32 durCurrent = aura->GetDuration();                                 // Current duration
+        int32 durBase = flameShockDot->GetDuration();                           // Duration stored in dbc
+        int32 durMod = durBase * caster->GetFloatValue(UNIT_MOD_CAST_SPEED);    // Duration modified by spell cast speed
+        int32 tickDuration = durMod / 6;                                        // time per tick (can we do this without dividing b y a static value?)
+        int32 twoTicks = tickDuration * 2;                                      // time for 2 ticks to occur
+        int32 durMax = durMod + twoTicks;                                       // Maximum duration we will allow (2 additional ticks)
+
+        int32 durNew = durMod;
+
+        // if current duration is less than max duration then we can extend
+        if (durCurrent >= twoTicks)
+            durNew = durMax;
+        else
+            durNew = durCurrent + durMod;
+
+        // Extend duration
+        aura->SetDuration(durNew);
+        aura->SetMaxDuration(durNew);
+
+        // Refresh DoT effect
+        flameShock->ChangeAmount(flameShock->CalculateAmount(flameShock->GetCaster()), false);
+        flameShock->CalculatePeriodic(caster, false, false);
     }
 
     void Register() override
