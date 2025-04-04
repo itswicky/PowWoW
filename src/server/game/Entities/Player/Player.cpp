@@ -24995,8 +24995,8 @@ void Player::StoreLootItem(uint8 lootSlot, Loot* loot)
 
 uint32 Player::CalculateTalentsPoints() const
 {
-    // Only allow player to get 1 talent point
-    uint32 base_talent = GetLevel() < 10 ? 0 : 1; //GetLevel()-9;
+    // Only allow player to get 1 talent point every 10 levels
+    uint32 base_talent = GetLevel() < 10 ? 0 : GetLevel() / 10;
 
     if (GetClass() != CLASS_DEATH_KNIGHT || GetMapId() != 609)
         return uint32(base_talent * sWorld->getRate(RATE_TALENT));
@@ -25381,7 +25381,7 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
                                 spentPoints += (rank + 1);
 
     // not have required min points spent in talent tree
-    if (spentPoints < (talentInfo->TierID * MAX_TALENT_RANK))
+    if (spentPoints < talentInfo->TierID)   // we only need 1 point per tier
         return;
 
     // spell not set in talent.dbc
