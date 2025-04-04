@@ -108,7 +108,8 @@ enum ShamanSpells
     SPELL_SHAMAN_WINDFURY_ATTACK_MH_NEW         = 91307,
     SPELL_SHAMAN_WINDFURY_ATTACK_OH_NEW         = 91308,
     SPELL_SHAMAN_LIGHTNING_BOLT_OVERLOAD        = 91322,
-    SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD       = 91323
+    SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD       = 91323,
+    SPELL_SHAMAN_FLAMESHOCK_DOT                 = 91331,
 };
 
 enum ShamanSpellIcons
@@ -2143,6 +2144,48 @@ class spell_sha_lava_lash2 : public SpellScript
     }
 };
 
+// 91218 - Flame Shock (Custom)
+class spell_sha_flame_shock_2 : public SpellScript
+{
+    PrepareSpellScript(spell_sha_flame_shock_2);
+
+    bool Validate(SpellInfo const* spellInfo) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_FLAMESHOCK_DOT });
+    }
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        Unit* target = GetExplTargetUnit();
+        if (caster)
+            if (target)
+                if (AuraEffect const* flameShock = target->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_SHAMAN, 0x10000000, 0x0, 0x0, caster->GetGUID())) // Check if caster's Flame Shock is already active on target
+                {
+                    // Check Flame Shock's current duration
+                    int32 countCurrent = flameShock->GetBase()->GetDuration();
+                    // Base max duration with modifiers
+                    int32 countMin = flameShock->GetBase()->GetMaxDuration();
+                    // The max time we will allow DoT to persist
+                    int32 countMax = countMin + (countMin / flameShock->GetTotalTicks()) * 2; // Can be extended by 2 additional ticks
+
+                    // if current duration is less than max duration then we can extend
+                    if (countCurrent < countMax)
+                        if ((countCurrent + countMin) > countMax)
+                            flameShock->GetBase()->SetDuration(countMax);
+                        else
+                            flameShock->GetBase()->SetDuration(countCurrent + countMin);
+                }
+                else
+                    caster->CastSpell(target, SPELL_SHAMAN_FLAMESHOCK_DOT);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_sha_flame_shock_2::HandleDummy, EFFECT_1, SPELL_EFFECT_DUMMY);
+    }
+};
+
 // 91262 Awaken Elements
 class spell_sha_awaken_elements : public SpellScript
 {
@@ -2358,4 +2401,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_windfury_weapon2);
     RegisterSpellScript(spell_sha_lava_lash2);
     RegisterSpellScript(spell_sha_lightning_overload2);
+    RegisterSpellScript(spell_sha_flame_shock_2);
 }
