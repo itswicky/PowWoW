@@ -112,6 +112,9 @@ enum ShamanSpells
     SPELL_SHAMAN_FLAMESHOCK_DOT                 = 91331,
     SPELL_SHAMAN_LIGHTNING_STRIKE               = 91334,
     SPELL_SHAMAN_FEEL_THE_BURN_DOT              = 91336,
+    SPELL_SHAMAN_NATURE_INFUSION                = 91338,
+    SPELL_SHAMAN_FIRE_INFUSION                  = 91339,
+    SPELL_SHAMAN_FROST_INFUSION                 = 91340,
 };
 
 enum ShamanSpellIcons
@@ -2434,6 +2437,48 @@ class spell_sha_feel_the_burn : public AuraScript
     }
 };
 
+// 91337 - Primordial Infusion
+class spell_sha_primordial_infusion : public AuraScript
+{
+    PrepareAuraScript(spell_sha_primordial_infusion);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo(
+            {
+                SPELL_SHAMAN_NATURE_INFUSION,
+                SPELL_SHAMAN_FIRE_INFUSION,
+                SPELL_SHAMAN_FROST_INFUSION
+            });
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+
+        DamageInfo* dmgInfo = eventInfo.GetDamageInfo();
+        if (!dmgInfo || !dmgInfo->GetDamage())
+            return;
+
+        Unit* caster = eventInfo.GetActor();
+
+        if (!(dmgInfo->GetSchoolMask() & SPELL_SCHOOL_NATURE || SPELL_SCHOOL_FIRE || SPELL_SCHOOL_FROST))
+            return;
+
+        if (dmgInfo->GetSchoolMask() & SPELL_SCHOOL_NATURE)
+            caster->AddAura(SPELL_SHAMAN_NATURE_INFUSION, caster);
+        if (dmgInfo->GetSchoolMask() & SPELL_SCHOOL_FIRE)
+            caster->AddAura(SPELL_SHAMAN_FIRE_INFUSION, caster);
+        if (dmgInfo->GetSchoolMask() & SPELL_SCHOOL_FROST)
+            caster->AddAura(SPELL_SHAMAN_FROST_INFUSION, caster);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_sha_primordial_infusion::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_ancestral_awakening);
@@ -2495,4 +2540,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_flame_shock_2);
     RegisterSpellScript(spell_sha_lightning_strike);
     RegisterSpellScript(spell_sha_feel_the_burn);
+    RegisterSpellScript(spell_sha_primordial_infusion);
 }
