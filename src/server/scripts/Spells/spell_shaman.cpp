@@ -111,6 +111,7 @@ enum ShamanSpells
     SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD       = 91323,
     SPELL_SHAMAN_FLAMESHOCK_DOT                 = 91331,
     SPELL_SHAMAN_LIGHTNING_STRIKE               = 91334,
+    SPELL_SHAMAN_FEEL_THE_BURN_DOT              = 91336,
 };
 
 enum ShamanSpellIcons
@@ -2395,6 +2396,44 @@ class spell_sha_lightning_strike : public AuraScript
     }
 };
 
+// 91335 - Feel the Burn
+class spell_sha_feel_the_burn : public AuraScript
+{
+    PrepareAuraScript(spell_sha_feel_the_burn);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_FEEL_THE_BURN_DOT });
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+
+        DamageInfo* dmgInfo = eventInfo.GetDamageInfo();
+        if (!dmgInfo || !dmgInfo->GetDamage())
+            return;
+
+        SpellInfo const* spellInfo = sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_FEEL_THE_BURN_DOT);
+        int32 amount = CalculatePct(static_cast<int32>(dmgInfo->GetDamage()), aurEff->GetAmount());
+
+        ASSERT(spellInfo->GetMaxTicks() > 0);
+        amount /= spellInfo->GetMaxTicks();
+
+        Unit* caster = eventInfo.GetActor();
+        Unit* target = eventInfo.GetProcTarget();
+
+        CastSpellExtraArgs args(aurEff);
+        args.AddSpellBP0(amount);
+        caster->CastSpell(target, SPELL_SHAMAN_FEEL_THE_BURN_DOT, args);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_sha_feel_the_burn::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_ancestral_awakening);
@@ -2455,4 +2494,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_lightning_overload2);
     RegisterSpellScript(spell_sha_flame_shock_2);
     RegisterSpellScript(spell_sha_lightning_strike);
+    RegisterSpellScript(spell_sha_feel_the_burn);
 }
