@@ -110,6 +110,7 @@ enum ShamanSpells
     SPELL_SHAMAN_LIGHTNING_BOLT_OVERLOAD        = 91322,
     SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD       = 91323,
     SPELL_SHAMAN_FLAMESHOCK_DOT                 = 91331,
+    SPELL_SHAMAN_LIGHTNING_STRIKE               = 91334,
 };
 
 enum ShamanSpellIcons
@@ -2364,6 +2365,36 @@ class spell_sha_awaken_elements : public SpellScript
     }
 };
 
+// 91333 - Lightning Strike
+class spell_sha_lightning_strike : public AuraScript
+{
+    PrepareAuraScript(spell_sha_lightning_strike);
+
+    bool Validate(SpellInfo const* spellInfo) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_LIGHTNING_STRIKE });
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        SpellInfo const* spellInfo = eventInfo.GetSpellInfo();
+        if (!spellInfo)
+            return false;
+
+        // critical strikes are full chance
+        if (eventInfo.GetHitMask() & PROC_HIT_CRITICAL)
+            return true;
+
+        // non-criticals have half chance
+        return roll_chance_i(50);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_sha_lightning_strike::CheckProc);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_ancestral_awakening);
@@ -2423,4 +2454,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_lava_lash2);
     RegisterSpellScript(spell_sha_lightning_overload2);
     RegisterSpellScript(spell_sha_flame_shock_2);
+    RegisterSpellScript(spell_sha_lightning_strike);
 }

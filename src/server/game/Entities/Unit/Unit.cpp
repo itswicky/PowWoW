@@ -7188,6 +7188,12 @@ float Unit::SpellCritChanceTaken(Unit const* caster, SpellInfo const* spellInfo,
                                     return 100.0f;
                             break;
                         }
+                        // Lightning Strike
+                        if (spellInfo->SpellFamilyFlags[2] & 0x00100000)
+                        {
+                            return 100.0f; // Always crits
+                            break;
+                        }
                         break;
                 }
 
