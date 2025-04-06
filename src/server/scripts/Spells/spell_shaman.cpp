@@ -2455,22 +2455,25 @@ class spell_sha_primordial_infusion : public AuraScript
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         PreventDefaultAction();
+        uint32 triggerspell = 0;
 
-        DamageInfo* dmgInfo = eventInfo.GetDamageInfo();
-        if (!dmgInfo || !dmgInfo->GetDamage())
-            return;
+        switch (GetFirstSchoolInMask(eventInfo.GetDamageInfo()->GetSchoolMask()))
+        {
+            case SPELL_SCHOOL_FIRE:
+                triggerspell = SPELL_SHAMAN_FIRE_INFUSION;
+                break;
+            case SPELL_SCHOOL_NATURE:
+                triggerspell = SPELL_SHAMAN_NATURE_INFUSION;
+                break;
+            case SPELL_SCHOOL_FROST:
+                triggerspell = SPELL_SHAMAN_FROST_INFUSION;
+                break;
+            default:
+                return;
+        }
 
-        Unit* caster = eventInfo.GetActor();
-
-        if (!(dmgInfo->GetSchoolMask() & SPELL_SCHOOL_NATURE || SPELL_SCHOOL_FIRE || SPELL_SCHOOL_FROST))
-            return;
-
-        if (dmgInfo->GetSchoolMask() & SPELL_SCHOOL_NATURE)
-            caster->AddAura(SPELL_SHAMAN_NATURE_INFUSION, caster);
-        if (dmgInfo->GetSchoolMask() & SPELL_SCHOOL_FIRE)
-            caster->AddAura(SPELL_SHAMAN_FIRE_INFUSION, caster);
-        if (dmgInfo->GetSchoolMask() & SPELL_SCHOOL_FROST)
-            caster->AddAura(SPELL_SHAMAN_FROST_INFUSION, caster);
+        if (Unit* caster = eventInfo.GetActor())
+            caster->CastSpell(caster, triggerspell, aurEff);
     }
 
     void Register() override

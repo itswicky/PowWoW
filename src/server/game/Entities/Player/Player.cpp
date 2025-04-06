@@ -25331,6 +25331,29 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
     if ((GetClassMask() & talentTabInfo->ClassMask) == 0)
         return;
 
+    // Only one tier 0 talent allowed across all talent trees
+    if (talentInfo->TierID == 0)
+    {
+        for (uint32 i = 0; i < sTalentStore.GetNumRows(); ++i)
+        {
+            TalentEntry const* otherTalent = sTalentStore.LookupEntry(i);
+            if (!otherTalent || otherTalent->TierID != 0)
+                continue;
+
+            for (uint8 rank = 0; rank < MAX_TALENT_RANK; ++rank)
+            {
+                if (otherTalent->SpellRank[rank] && HasSpell(otherTalent->SpellRank[rank]))
+                {
+                    if (otherTalent->ID != talentInfo->ID)
+                    {
+                        GetSession()->SendNotification("You may only have one specialization selected.");
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
     // find current max talent rank (0~5)
     uint8 curtalent_maxrank = 0; // 0 = not learned any rank
     for (int8 rank = MAX_TALENT_RANK-1; rank >= 0; --rank)
@@ -25349,6 +25372,32 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
     // check if we have enough talent points
     if (CurTalentPoints < (talentRank - curtalent_maxrank + 1))
         return;
+
+    // Check if player already has a talent learned in this tier (only allow 1 per tier)
+    for (uint32 i = 0; i < sTalentStore.GetNumRows(); ++i)
+    {
+        TalentEntry const* otherTalent = sTalentStore.LookupEntry(i);
+        if (!otherTalent)
+            continue;
+
+        if (otherTalent->TabID != talentInfo->TabID)
+            continue;
+
+        if (otherTalent->TierID != talentInfo->TierID)
+            continue;
+
+        for (uint8 rank = 0; rank < MAX_TALENT_RANK; ++rank)
+        {
+            if (otherTalent->SpellRank[rank] && HasSpell(otherTalent->SpellRank[rank]))
+            {
+                if (otherTalent->ID != talentInfo->ID) // allow upgrading same talent
+                {
+                    GetSession()->SendNotification("You may only select one talent per tier.");
+                    return;
+                }
+            }
+        }
+    }
 
     // Check if it requires another talent
     if (talentInfo->PrereqTalent > 0)
