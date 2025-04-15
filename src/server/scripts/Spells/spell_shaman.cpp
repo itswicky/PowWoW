@@ -115,6 +115,9 @@ enum ShamanSpells
     SPELL_SHAMAN_NATURE_INFUSION                = 91338,
     SPELL_SHAMAN_FIRE_INFUSION                  = 91339,
     SPELL_SHAMAN_FROST_INFUSION                 = 91340,
+    SPELL_SHAMAN_ELE_WARD_NATURE                = 91345,
+    SPELL_SHAMAN_ELE_WARD_FIRE                  = 91346,
+    SPELL_SHAMAN_ELE_WARD_FROST                 = 91347,
 };
 
 enum ShamanSpellIcons
@@ -2482,6 +2485,77 @@ class spell_sha_primordial_infusion : public AuraScript
     }
 };
 
+// 91344 - Elemental Warding
+class spell_sha_elemental_warding : public AuraScript
+{
+    PrepareAuraScript(spell_sha_elemental_warding);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo(
+            {
+                SPELL_SHAMAN_ELE_WARD_NATURE,
+                SPELL_SHAMAN_ELE_WARD_FIRE,
+                SPELL_SHAMAN_ELE_WARD_FROST
+            });
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (DamageInfo* damageInfo = eventInfo.GetDamageInfo())
+        {
+            switch (GetFirstSchoolInMask(damageInfo->GetSchoolMask()))
+            {
+                case SPELL_SCHOOL_FIRE:
+                case SPELL_SCHOOL_NATURE:
+                case SPELL_SCHOOL_FROST:
+                    return true;
+                default:
+                    break;
+            }
+        }
+        return false;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+        uint32 triggerspell = 0;
+
+        switch (GetFirstSchoolInMask(eventInfo.GetDamageInfo()->GetSchoolMask()))
+        {
+            case SPELL_SCHOOL_FIRE:
+                triggerspell = SPELL_SHAMAN_ELE_WARD_FIRE;
+                break;
+            case SPELL_SCHOOL_NATURE:
+                triggerspell = SPELL_SHAMAN_ELE_WARD_NATURE;
+                break;
+            case SPELL_SCHOOL_FROST:
+                triggerspell = SPELL_SHAMAN_ELE_WARD_FROST;
+                break;
+            default:
+                return;
+        }
+
+        Unit* caster = eventInfo.GetActionTarget();
+        if (!caster)
+            return;
+
+        int32 amount = CalculatePct(static_cast<int32>(caster->GetMaxHealth()), aurEff->GetAmount());
+
+        CastSpellExtraArgs args(aurEff);
+        args.AddSpellBP0(amount);
+        caster->CastSpell(caster, triggerspell, args);
+            
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_sha_elemental_warding::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_sha_elemental_warding::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_ancestral_awakening);
@@ -2544,4 +2618,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_lightning_strike);
     RegisterSpellScript(spell_sha_feel_the_burn);
     RegisterSpellScript(spell_sha_primordial_infusion);
+    RegisterSpellScript(spell_sha_elemental_warding);
 }
