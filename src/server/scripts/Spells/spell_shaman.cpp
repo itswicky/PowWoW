@@ -118,6 +118,7 @@ enum ShamanSpells
     SPELL_SHAMAN_ELE_WARD_NATURE                = 91345,
     SPELL_SHAMAN_ELE_WARD_FIRE                  = 91346,
     SPELL_SHAMAN_ELE_WARD_FROST                 = 91347,
+    SPELL_SHAMAN_ELE_CONVERGENCE                = 91350,
 };
 
 enum ShamanSpellIcons
@@ -2556,6 +2557,27 @@ class spell_sha_elemental_warding : public AuraScript
     }
 };
 
+// 91350 - Elemental Convergence
+class spell_sha_ele_convergence : public SpellScript
+{
+    PrepareSpellScript(spell_sha_ele_convergence);
+
+    bool Validate(SpellInfo const* spellInfo) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_ELE_CONVERGENCE });
+    }
+
+    void HandleEffect(SpellEffIndex /*effIndex*/)
+    {
+        GetCaster()->GetSpellHistory()->ModifyCooldown(91251 /*Lava Burst*/, -(2 * IN_MILLISECONDS));
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_sha_ele_convergence::HandleEffect, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_ancestral_awakening);
@@ -2619,4 +2641,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_feel_the_burn);
     RegisterSpellScript(spell_sha_primordial_infusion);
     RegisterSpellScript(spell_sha_elemental_warding);
+    RegisterSpellScript(spell_sha_ele_convergence);
 }
