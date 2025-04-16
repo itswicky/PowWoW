@@ -120,6 +120,7 @@ enum ShamanSpells
     SPELL_SHAMAN_ELE_WARD_FROST                 = 91347,
     SPELL_SHAMAN_ELE_CONVERGENCE                = 91350,
     SPELL_SHAMAN_VOLCANIC_IMPACT                = 91352,
+    SPELL_SHAMAN_LAVA_BURST_OVERLOAD            = 91356,
 };
 
 enum ShamanSpellIcons
@@ -1003,7 +1004,8 @@ class spell_sha_lightning_overload2 : public AuraScript
         return ValidateSpellInfo(
             {
                 SPELL_SHAMAN_LIGHTNING_BOLT_OVERLOAD,
-                SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD
+                SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD,
+                SPELL_SHAMAN_LAVA_BURST_OVERLOAD
             });
     }
 
@@ -1011,17 +1013,27 @@ class spell_sha_lightning_overload2 : public AuraScript
     {
         PreventDefaultAction();
 
+        Unit* caster = eventInfo.GetActor();
+        if (!caster)
+            return;
+
         SpellInfo const* spellInfo = eventInfo.GetSpellInfo();
         if (!spellInfo)
             return;
 
         uint32 spellId;
 
+        // Do not allow to proc off self
+        // We have to add this to be able to include Reverberating Storm logic later
+        if (!caster->HasAura(91354)/*Reverberating Storm*/ && spellInfo->SpellFamilyFlags[1] & 0x30000000)
+            return;
         // Lightning Bolt
-        if (spellInfo->SpellFamilyFlags[0] & 0x00000001)
+        else if ((spellInfo->SpellFamilyFlags[0] & 0x1 && !(spellInfo->SpellFamilyFlags[1] & 0x10000000)) ||
+            (caster->HasAura(91354) && spellInfo->SpellFamilyFlags[1] & 0x10000000))
             spellId = SPELL_SHAMAN_LIGHTNING_BOLT_OVERLOAD;
         // Chain Lightning
-        else
+        else if ((spellInfo->SpellFamilyFlags[0] & 0x2 && !(spellInfo->SpellFamilyFlags[1] & 0x20000000)) ||
+            (caster->HasAura(91354) && spellInfo->SpellFamilyFlags[1] & 0x20000000))
         {
             // Chain lightning has [LightOverload_Proc_Chance] / [Max_Number_of_Targets] chance to proc of each individual target hit.
             // A maxed LO would have a 33% / 3 = 11% chance to proc of each target.
@@ -1032,8 +1044,12 @@ class spell_sha_lightning_overload2 : public AuraScript
 
             spellId = SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD;
         }
+        else if (spellInfo->SpellFamilyFlags[1] & 0x1000 && caster->HasAura(91355) && !(spellInfo->SpellFamilyFlags[1] & 0x40000000)) // Lava Infusion
+            spellId = SPELL_SHAMAN_LAVA_BURST_OVERLOAD;
+        else
+            return;
 
-        eventInfo.GetActor()->CastSpell(eventInfo.GetProcTarget(), spellId, aurEff);
+        caster->CastSpell(eventInfo.GetProcTarget(), spellId, aurEff);
     }
 
     void Register() override
