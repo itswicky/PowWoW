@@ -2001,9 +2001,22 @@ uint8 Aura::GetProcEffectMask(AuraApplication* aurApp, ProcEventInfo& eventInfo,
     // check spell triggering us
     if (Spell const* spell = eventInfo.GetProcSpell())
     {
-        // Do not allow auras to proc from effect triggered from itself
+        // Custom exception: Allow aura 91321 (Lightning Overload) to proc itself if the owner has aura 91354 (Reverberating Storm)
         if (spell->IsTriggeredByAura(m_spellInfo))
-            return 0;
+        {
+            if (m_spellInfo->Id == 91321) // Lightning Overload
+            {
+                Unit* actor = eventInfo.GetActor(); // The source of the proc
+                if (actor && actor->HasAura(91354)) // Reverberating Storm
+                {
+                    // Allow proc
+                }
+                else
+                    return 0;
+            }
+            else
+                return 0;
+        }
 
         // check if aura can proc when spell is triggered (exception for hunter auto shot & wands)
         if (spell->IsTriggered() && !(procEntry->AttributesMask & PROC_ATTR_TRIGGERED_CAN_PROC) && !(eventInfo.GetTypeMask() & AUTO_ATTACK_PROC_FLAG_MASK))
