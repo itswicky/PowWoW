@@ -119,6 +119,7 @@ enum ShamanSpells
     SPELL_SHAMAN_ELE_WARD_FIRE                  = 91346,
     SPELL_SHAMAN_ELE_WARD_FROST                 = 91347,
     SPELL_SHAMAN_ELE_CONVERGENCE                = 91350,
+    SPELL_SHAMAN_VOLCANIC_IMPACT                = 91352,
 };
 
 enum ShamanSpellIcons
@@ -2578,6 +2579,43 @@ class spell_sha_ele_convergence : public SpellScript
     }
 };
 
+// 91351 - Volcanic Impact
+class spell_sha_volcanic_impact : public AuraScript
+{
+    PrepareAuraScript(spell_sha_volcanic_impact);
+
+    bool Validate(SpellInfo const* spellInfo) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_VOLCANIC_IMPACT });
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        SpellInfo const* spellInfo = eventInfo.GetSpellInfo();
+        if (!spellInfo)
+            return false;
+
+        Unit* target = eventInfo.GetProcTarget();
+        Unit* caster = eventInfo.GetActor();
+        if (!target || !caster)
+            return false;
+
+        // Return if target does not have caster's Flame Shock
+        if (!target->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE,
+            SPELLFAMILY_SHAMAN,
+            0x10000000, 0x0, 0x0,
+            caster->GetGUID()))
+            return false;
+
+        return true;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_sha_volcanic_impact::CheckProc);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_ancestral_awakening);
@@ -2642,4 +2680,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_primordial_infusion);
     RegisterSpellScript(spell_sha_elemental_warding);
     RegisterSpellScript(spell_sha_ele_convergence);
+    RegisterSpellScript(spell_sha_volcanic_impact);
 }
