@@ -1571,7 +1571,7 @@ void Spell::SelectImplicitChainTargets(SpellEffectInfo const& spellEffectInfo, S
         uint8 bounceIndex = 1; // Start at 1 (first bounce after primary target)
         for (std::list<WorldObject*>::iterator itr = targets.begin(); itr != targets.end(); ++itr)
             if (Unit* unit = (*itr)->ToUnit())
-                AddUnitTarget(unit, effMask, false, bounceIndex++);
+                AddUnitTarget(unit, effMask, false, true, nullptr, bounceIndex++);
     }
 }
 
@@ -7591,33 +7591,15 @@ void Spell::HandleLaunchPhase()
 
     for (SpellEffectInfo const& spellEffectInfo : m_spellInfo->GetEffects())
     {
+        float multiplier = 1.0f;
+        if (m_applyMultiplierMask & (1 << spellEffectInfo.EffectIndex))
+            multiplier = spellEffectInfo.CalcDamageMultiplier(m_originalCaster, this);
+
         for (TargetInfo& target : m_UniqueTargetInfo)
         {
             uint32 mask = target.EffectMask;
             if (!(mask & (1 << spellEffectInfo.EffectIndex)))
                 continue;
-
-            float multiplier = 1.0f;
-
-            if (m_applyMultiplierMask & (1 << spellEffectInfo.EffectIndex))
-            {
-                // Default multiplier from DBC
-                float dbcMultiplier = spellEffectInfo.CalcDamageMultiplier(m_originalCaster, this);
-
-                // Custom logic for spell ID 91352
-                if (m_spellInfo->Id == 91352)
-                {
-                    if (target.ChainBounceIndex == 0)
-                        multiplier = 1.0f; // Full damage
-                    else
-                        multiplier = dbcMultiplier; // Reduced damage from DBC (applied once, same for all bounces after the first)
-                }
-                else
-                {
-                    // Default behavior for all other spells
-                    multiplier = dbcMultiplier;
-                }
-            }
 
             DoEffectOnLaunchTarget(target, multiplier, spellEffectInfo);
         }
@@ -7694,10 +7676,24 @@ void Spell::DoEffectOnLaunchTarget(TargetInfo& targetInfo, float multiplier, Spe
 
     if (m_applyMultiplierMask & (1 << spellEffectInfo.EffectIndex))
     {
-        m_damage = int32(m_damage * m_damageMultipliers[spellEffectInfo.EffectIndex]);
-        m_healing = int32(m_healing * m_damageMultipliers[spellEffectInfo.EffectIndex]);
+        float actualMultiplier = m_damageMultipliers[spellEffectInfo.EffectIndex];
 
-        m_damageMultipliers[spellEffectInfo.EffectIndex] *= multiplier;
+        // Volcanic Impact - deals full damage to initial target then reduces damage only once in the chain
+        if (m_spellInfo->Id == 91352)
+        {
+            if (targetInfo.ChainBounceIndex == 0)
+                actualMultiplier *= 1.0f;
+            else
+                actualMultiplier *= multiplier;
+        }
+        else
+        {
+            actualMultiplier = m_damageMultipliers[spellEffectInfo.EffectIndex];
+            m_damageMultipliers[spellEffectInfo.EffectIndex] *= multiplier;
+        }
+
+        m_damage = int32(m_damage * actualMultiplier);
+        m_healing = int32(m_healing * actualMultiplier);
     }
 
     targetInfo.Damage += m_damage;
