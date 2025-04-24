@@ -2218,6 +2218,10 @@ class spell_sha_flame_shock_2 : public SpellScript
         else
             durNew = durCurrent + durMod;
 
+        // Case for Ascension: Fire. Need to refresh duration on chained targets.
+        if (caster->HasAura(91358))
+            caster->CastSpell(target, SPELL_SHAMAN_FLAMESHOCK_DOT);
+
         // Extend duration
         aura->SetDuration(durNew);
         aura->SetMaxDuration(durNew);
@@ -2667,9 +2671,9 @@ class spell_sha_ascension_fire_dummy : public SpellScript
 
     void HandleEffect(SpellEffIndex /*effIndex*/)
     {
-        GetCaster()->GetSpellHistory()->ModifyCooldown(91251 /*Lava Burst*/, -(2 * IN_MILLISECONDS));
-        GetCaster()->GetSpellHistory()->ModifyCooldown(91228 /*Fire Nova*/, -(2 * IN_MILLISECONDS));
-        GetCaster()->GetSpellHistory()->ModifyCooldown(91218 /*Flame Shock*/, -(2 * IN_MILLISECONDS));
+        GetCaster()->GetSpellHistory()->ModifyCooldown(91251 /*Lava Burst*/, -(3 * IN_MILLISECONDS));
+        GetCaster()->GetSpellHistory()->ModifyCooldown(91228 /*Fire Nova*/, -(5 * IN_MILLISECONDS));
+        GetCaster()->GetSpellHistory()->ModifyCooldown(91218 /*Flame Shock*/, -(4 * IN_MILLISECONDS));
     }
 
     void Register() override

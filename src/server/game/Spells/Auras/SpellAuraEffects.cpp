@@ -2067,6 +2067,9 @@ void AuraEffect::HandleAuraTransform(AuraApplication const* aurApp, uint8 mode, 
                     case 75531:
                         target->SetDisplayId(gender == GENDER_MALE ? 31654 : 31655);
                         break;
+                    // Ascension: Fire
+                    case 91360:
+                        target->SetDisplayId(32762);
                     default:
                         break;
                 }
