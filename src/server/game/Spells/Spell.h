@@ -582,6 +582,8 @@ class TC_GAME_API Spell
             bool Positive = true;
             UnitAura* HitAura = nullptr;
 
+            uint8 ChainBounceIndex = 0; // NEW: index of the bounce (0 = first hit, 1 = second hit, etc.)
+
         private:
             Unit* _spellHitTarget = nullptr; // changed for example by reflect
             bool _enablePVP = false;         // need to enable PVP at DoDamageAndTriggers?
@@ -620,7 +622,7 @@ class TC_GAME_API Spell
 
         SpellDestination m_destTargets[MAX_SPELL_EFFECTS];
 
-        void AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid = true, bool implicit = true, Position const* losPosition = nullptr);
+        void AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid = true, bool implicit = true, Position const* losPosition = nullptr, uint8 bounceIndex = 0);
         void AddGOTarget(GameObject* target, uint32 effectMask);
         void AddItemTarget(Item* item, uint32 effectMask);
         void AddCorpseTarget(Corpse* target, uint32 effectMask);

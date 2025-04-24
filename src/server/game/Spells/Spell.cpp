@@ -1568,9 +1568,10 @@ void Spell::SelectImplicitChainTargets(SpellEffectInfo const& spellEffectInfo, S
         // Chain primary target is added earlier
         CallScriptObjectAreaTargetSelectHandlers(targets, spellEffectInfo.EffectIndex, targetType);
 
+        uint8 bounceIndex = 1; // Start at 1 (first bounce after primary target)
         for (std::list<WorldObject*>::iterator itr = targets.begin(); itr != targets.end(); ++itr)
             if (Unit* unit = (*itr)->ToUnit())
-                AddUnitTarget(unit, effMask, false);
+                AddUnitTarget(unit, effMask, false, bounceIndex++);
     }
 }
 
@@ -2057,7 +2058,7 @@ class ProcReflectDelayed : public BasicEvent
         ObjectGuid _casterGuid;
 };
 
-void Spell::AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid /*= true*/, bool implicit /*= true*/, Position const* losPosition /*= nullptr*/)
+void Spell::AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid /*= true*/, bool implicit /*= true*/, Position const* losPosition /*= nullptr*/, uint8 bounceIndex)
 {
     for (SpellEffectInfo const& spellEffectInfo : m_spellInfo->GetEffects())
         if (!spellEffectInfo.IsEffect() || !CheckEffectTarget(target, spellEffectInfo, losPosition))
@@ -2105,6 +2106,7 @@ void Spell::AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid /*=
     targetInfo.Healing    = 0;
     targetInfo.IsCrit     = false;
     targetInfo.ScaleAura  = false;
+    targetInfo.ChainBounceIndex = bounceIndex;
     if (m_auraScaleMask && targetInfo.EffectMask == m_auraScaleMask && m_caster != target)
     {
         SpellInfo const* auraSpell = m_spellInfo->GetFirstRankSpell();
@@ -7589,15 +7591,33 @@ void Spell::HandleLaunchPhase()
 
     for (SpellEffectInfo const& spellEffectInfo : m_spellInfo->GetEffects())
     {
-        float multiplier = 1.0f;
-        if (m_applyMultiplierMask & (1 << spellEffectInfo.EffectIndex))
-            multiplier = spellEffectInfo.CalcDamageMultiplier(m_originalCaster, this);
-
         for (TargetInfo& target : m_UniqueTargetInfo)
         {
             uint32 mask = target.EffectMask;
             if (!(mask & (1 << spellEffectInfo.EffectIndex)))
                 continue;
+
+            float multiplier = 1.0f;
+
+            if (m_applyMultiplierMask & (1 << spellEffectInfo.EffectIndex))
+            {
+                // Default multiplier from DBC
+                float dbcMultiplier = spellEffectInfo.CalcDamageMultiplier(m_originalCaster, this);
+
+                // Custom logic for spell ID 91352
+                if (m_spellInfo->Id == 91352)
+                {
+                    if (target.ChainBounceIndex == 0)
+                        multiplier = 1.0f; // Full damage
+                    else
+                        multiplier = dbcMultiplier; // Reduced damage from DBC (applied once, same for all bounces after the first)
+                }
+                else
+                {
+                    // Default behavior for all other spells
+                    multiplier = dbcMultiplier;
+                }
+            }
 
             DoEffectOnLaunchTarget(target, multiplier, spellEffectInfo);
         }
