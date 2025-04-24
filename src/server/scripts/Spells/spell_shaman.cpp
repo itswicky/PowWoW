@@ -2632,6 +2632,52 @@ class spell_sha_volcanic_impact : public AuraScript
     }
 };
 
+// 91360 - Ascension: Fire (Morph & Dummy Effect)
+class spell_sha_ascension_fire : public SpellScript
+{
+    PrepareSpellScript(spell_sha_ascension_fire);
+
+    bool Validate(SpellInfo const* spellInfo) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_ELE_CONVERGENCE });
+    }
+
+    void HandleEffect(SpellEffIndex /*effIndex*/)
+    {
+        GetCaster()->GetSpellHistory()->ResetCooldown(91251 /*Lava Burst*/, true);
+        GetCaster()->GetSpellHistory()->ResetCooldown(91228 /*Fire Nova*/, true);
+        GetCaster()->GetSpellHistory()->ResetCooldown(91218 /*Flame Shock*/, true);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_sha_ascension_fire::HandleEffect, EFFECT_2, SPELL_EFFECT_DUMMY);
+    }
+};
+
+// 91359 - Ascension: Fire (Dummy)
+class spell_sha_ascension_fire_dummy : public SpellScript
+{
+    PrepareSpellScript(spell_sha_ascension_fire_dummy);
+
+    bool Validate(SpellInfo const* spellInfo) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_ELE_CONVERGENCE });
+    }
+
+    void HandleEffect(SpellEffIndex /*effIndex*/)
+    {
+        GetCaster()->GetSpellHistory()->ModifyCooldown(91251 /*Lava Burst*/, -(2 * IN_MILLISECONDS));
+        GetCaster()->GetSpellHistory()->ModifyCooldown(91228 /*Fire Nova*/, -(2 * IN_MILLISECONDS));
+        GetCaster()->GetSpellHistory()->ModifyCooldown(91218 /*Flame Shock*/, -(2 * IN_MILLISECONDS));
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_sha_ascension_fire_dummy::HandleEffect, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_ancestral_awakening);
@@ -2697,4 +2743,6 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_elemental_warding);
     RegisterSpellScript(spell_sha_ele_convergence);
     RegisterSpellScript(spell_sha_volcanic_impact);
+    RegisterSpellScript(spell_sha_ascension_fire);
+    RegisterSpellScript(spell_sha_ascension_fire_dummy);
 }
