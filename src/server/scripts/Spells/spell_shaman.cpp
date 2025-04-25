@@ -2205,8 +2205,10 @@ class spell_sha_flame_shock_2 : public SpellScript
 
         int32 durCurrent = aura->GetDuration();                                 // Current duration
         int32 durBase = flameShockDot->GetDuration();                           // Duration stored in dbc
+        if (caster->HasAura(91351))                                             // Volcanic Impact
+            durBase += 6 * IN_MILLISECONDS;
         int32 durMod = durBase * caster->GetFloatValue(UNIT_MOD_CAST_SPEED);    // Duration modified by spell cast speed
-        int32 tickDuration = durMod / 6;                                        // time per tick (can we do this without dividing b y a static value?)
+        int32 tickDuration = caster->HasAura(91351) ? durMod / 8 : durMod / 6;  // time per tick (can we do this without dividing b y a static value?)
         int32 twoTicks = tickDuration * 2;                                      // time for 2 ticks to occur
         int32 durMax = durMod + twoTicks;                                       // Maximum duration we will allow (2 additional ticks)
 
