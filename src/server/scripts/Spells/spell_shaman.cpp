@@ -2590,7 +2590,18 @@ class spell_sha_ele_convergence : public SpellScript
 
     void HandleEffect(SpellEffIndex /*effIndex*/)
     {
-        GetCaster()->GetSpellHistory()->ModifyCooldown(91251 /*Lava Burst*/, -(2 * IN_MILLISECONDS));
+        Unit* caster = GetCaster();
+        if (!caster)
+            return;
+
+        SpellInfo const* spellInfo = sSpellMgr->AssertSpellInfo(91349); // Elemental Convergence Passive
+        uint32 currentStack = caster->GetAuraCount(91329); // Booming Thunder
+        int32 addStack = spellInfo->GetEffect(EFFECT_0).CalcValue();
+        uint32 totalStack = currentStack + addStack;
+        int32 cooldownReduction = spellInfo->GetEffect(EFFECT_2).CalcValue();
+
+        caster->SetAuraStack(91329, caster, totalStack);
+        caster->GetSpellHistory()->ModifyCooldown(91251 /*Lava Burst*/, cooldownReduction);
     }
 
     void Register() override
