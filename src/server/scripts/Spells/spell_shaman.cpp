@@ -2689,7 +2689,7 @@ class spell_sha_ascension_fire_dummy : public SpellScript
             return;
 
         if (Creature* fireTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_FIRE]))
-            caster->CastSpell(caster, 91228);
+            caster->CastSpell(caster, 91228, true);           
         else
             return;
     }
