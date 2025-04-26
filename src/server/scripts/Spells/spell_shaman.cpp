@@ -2684,9 +2684,14 @@ class spell_sha_ascension_fire_dummy : public SpellScript
 
     void HandleEffect(SpellEffIndex /*effIndex*/)
     {
-        GetCaster()->GetSpellHistory()->ModifyCooldown(91251 /*Lava Burst*/, -(3 * IN_MILLISECONDS));
-        GetCaster()->GetSpellHistory()->ModifyCooldown(91228 /*Fire Nova*/, -(5 * IN_MILLISECONDS));
-        GetCaster()->GetSpellHistory()->ModifyCooldown(91218 /*Flame Shock*/, -(4 * IN_MILLISECONDS));
+        Player* caster = GetCaster()->ToPlayer();
+        if (!caster)
+            return;
+
+        if (Creature* fireTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_FIRE]))
+            caster->CastSpell(caster, 91228);
+        else
+            return;
     }
 
     void Register() override
