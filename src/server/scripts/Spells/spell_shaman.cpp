@@ -124,6 +124,12 @@ enum ShamanSpells
     SPELL_SHAMAN_LAVA_BURST_OVERLOAD            = 91356,
     SPELL_SHAMAN_LIGHTNING_BOLT                 = 91204,
     SPELL_SHAMAN_MAGMA_BLAST                    = 91362,
+    SPELL_SHAMAN_CRYO_BURST                     = 91367,
+    SPELL_SHAMAN_LAVA_BURST                     = 91251,
+    SPELL_SHAMAN_ICY_NOVA                       = 91371,
+    SPELL_SHAMAN_ICY_NOVA_TRIGGER               = 91370,
+    SPELL_SHAMAN_FIRE_NOVA                      = 91229,
+    SPELL_SHAMAN_FIRE_NOVA_TRIGGER              = 91228,
 };
 
 enum ShamanSpellIcons
@@ -2603,10 +2609,18 @@ class spell_sha_ele_convergence : public SpellScript
         uint32 currentStack = caster->GetAuraCount(91329); // Booming Thunder
         int32 addStack = spellInfo->GetEffect(EFFECT_0).CalcValue();
         uint32 totalStack = currentStack + addStack;
+        uint32 maxStack = sSpellMgr->AssertSpellInfo(91329)->StackAmount;
         int32 cooldownReduction = spellInfo->GetEffect(EFFECT_2).CalcValue();
 
-        caster->SetAuraStack(91329, caster, totalStack);
-        caster->GetSpellHistory()->ModifyCooldown(91251 /*Lava Burst*/, cooldownReduction);
+        caster->GetSpellHistory()->ModifyCooldown(SPELL_SHAMAN_LAVA_BURST, cooldownReduction);
+        caster->GetSpellHistory()->ModifyCooldown(SPELL_SHAMAN_CRYO_BURST, cooldownReduction);
+
+        if (currentStack == maxStack)
+            return;
+        else if (totalStack > maxStack)
+            caster->SetAuraStack(91329, caster, maxStack);
+        else
+            caster->SetAuraStack(91329, caster, totalStack);
     }
 
     void Register() override
@@ -2664,8 +2678,8 @@ class spell_sha_ascension_fire : public SpellScript
 
     void HandleEffect(SpellEffIndex /*effIndex*/)
     {
-        GetCaster()->GetSpellHistory()->ResetCooldown(91251 /*Lava Burst*/, true);
-        GetCaster()->GetSpellHistory()->ResetCooldown(91228 /*Fire Nova*/, true);
+        GetCaster()->GetSpellHistory()->ResetCooldown(SPELL_SHAMAN_LAVA_BURST /*Lava Burst*/, true);
+        GetCaster()->GetSpellHistory()->ResetCooldown(SPELL_SHAMAN_FIRE_NOVA_TRIGGER /*Fire Nova*/, true);
         GetCaster()->GetSpellHistory()->ResetCooldown(91218 /*Flame Shock*/, true);
     }
 
@@ -2692,7 +2706,7 @@ class spell_sha_ascension_fire_dummy : public SpellScript
             return;
 
         if (Creature* fireTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_FIRE]))
-            caster->CastSpell(caster, 91228, true);           
+            caster->CastSpell(caster, SPELL_SHAMAN_FIRE_NOVA_TRIGGER, true);
         else
             return;
     }
@@ -2704,7 +2718,7 @@ class spell_sha_ascension_fire_dummy : public SpellScript
 };
 
 // PlayerButtonSlots - Store which button we swapped for each player
-static std::unordered_map<ObjectGuid, uint8> PlayerButtonSlots;
+static std::unordered_map<ObjectGuid, std::unordered_map<uint32, uint8>> PlayerButtonSlots;
 
 // 91358 - Ascension Fire (Magma Blast action bar swapping)
 class spell_sha_magma_blast : public AuraScript
@@ -2733,7 +2747,7 @@ class spell_sha_magma_blast : public AuraScript
                 if (actionButton->GetType() == ACTION_BUTTON_SPELL && actionButton->GetAction() == SPELL_SHAMAN_LIGHTNING_BOLT)
                 {
                     // Save the button index for this player
-                    PlayerButtonSlots[player->GetGUID()] = button;
+                    PlayerButtonSlots[player->GetGUID()][SPELL_SHAMAN_LIGHTNING_BOLT] = button;
 
                     // Remove Lightning Bolt
                     player->removeActionButton(button);
@@ -2753,10 +2767,10 @@ class spell_sha_magma_blast : public AuraScript
     {
         if (Player* player = GetTarget()->ToPlayer())
         {
-            auto it = PlayerButtonSlots.find(player->GetGUID());
-            if (it != PlayerButtonSlots.end())
+            auto& buttonSlots = PlayerButtonSlots[player->GetGUID()];
+            if (buttonSlots.find(SPELL_SHAMAN_LIGHTNING_BOLT) != buttonSlots.end())
             {
-                uint8 button = it->second;
+                uint8 button = buttonSlots[SPELL_SHAMAN_LIGHTNING_BOLT];
 
                 // Remove Magma Blast
                 player->removeActionButton(button);
@@ -2768,7 +2782,7 @@ class spell_sha_magma_blast : public AuraScript
                 player->SendActionButtons(1);
 
                 // Clean up
-                PlayerButtonSlots.erase(it);
+                buttonSlots.erase(SPELL_SHAMAN_LIGHTNING_BOLT);
             }
             // Unlearn Magma Blast if still known
             if (player->HasSpell(SPELL_SHAMAN_MAGMA_BLAST))
@@ -2780,6 +2794,170 @@ class spell_sha_magma_blast : public AuraScript
     {
         AfterEffectApply += AuraEffectApplyFn(spell_sha_magma_blast::OnApply, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
         AfterEffectRemove += AuraEffectRemoveFn(spell_sha_magma_blast::OnRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 91365 - Ascension Frost (Cryo Burst action bar swapping)
+class spell_sha_cryo_burst : public AuraScript
+{
+    PrepareAuraScript(spell_sha_cryo_burst);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_CRYO_BURST, SPELL_SHAMAN_ICY_NOVA_TRIGGER });
+    }
+
+    void OnApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        if (Player* player = GetTarget()->ToPlayer())
+        {
+            // Teach Cryo Burst if not already known
+            if (!player->HasSpell(SPELL_SHAMAN_CRYO_BURST))
+                player->LearnSpell(SPELL_SHAMAN_CRYO_BURST, false);
+            // Teach Icy Nova if not already known
+            if (!player->HasSpell(SPELL_SHAMAN_ICY_NOVA_TRIGGER))
+                player->LearnSpell(SPELL_SHAMAN_ICY_NOVA_TRIGGER, false);
+
+            for (uint8 button = 0; button < MAX_ACTION_BUTTONS; ++button)
+            {
+                ActionButton const* actionButton = player->GetActionButton(button);
+                if (!actionButton)
+                    continue;
+
+                if (actionButton->GetType() == ACTION_BUTTON_SPELL)
+                {
+                    if (actionButton->GetAction() == SPELL_SHAMAN_LAVA_BURST)
+                    {
+                        // Save the button index for this player
+                        PlayerButtonSlots[player->GetGUID()][SPELL_SHAMAN_LAVA_BURST] = button;
+
+                        // Remove Lava Burst
+                        player->removeActionButton(button);
+
+                        // Add Cryo Burst
+                        if (ActionButton* ab = player->addActionButton(button, SPELL_SHAMAN_CRYO_BURST, ACTION_BUTTON_SPELL))
+                            ab->uState = ACTIONBUTTON_CHANGED;
+
+                        player->SendActionButtons(1);
+                    }
+                    else if (actionButton->GetAction() == SPELL_SHAMAN_FIRE_NOVA_TRIGGER)
+                    {
+                        // Save the button index for this player
+                        PlayerButtonSlots[player->GetGUID()][SPELL_SHAMAN_FIRE_NOVA_TRIGGER] = button;
+
+                        // Remove Lava Burst
+                        player->removeActionButton(button);
+
+                        // Add Cryo Burst
+                        if (ActionButton* ab = player->addActionButton(button, SPELL_SHAMAN_ICY_NOVA_TRIGGER, ACTION_BUTTON_SPELL))
+                            ab->uState = ACTIONBUTTON_CHANGED;
+
+                        player->SendActionButtons(1);
+                    }
+                }
+            }
+        }
+    }
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        if (Player* player = GetTarget()->ToPlayer())
+        {
+            // Handle Cryo Burst and Icy Nova removal and replacement separately
+            auto& buttonSlots = PlayerButtonSlots[player->GetGUID()];
+
+            // Check if the button was for Cryo Burst (replacing Lava Burst)
+            if (buttonSlots.find(SPELL_SHAMAN_LAVA_BURST) != buttonSlots.end())
+            {
+                uint8 button = buttonSlots[SPELL_SHAMAN_LAVA_BURST];
+
+                // Remove Cryo Burst
+                player->removeActionButton(button);
+
+                // Add Lava Burst back
+                if (ActionButton* ab = player->addActionButton(button, SPELL_SHAMAN_LAVA_BURST, ACTION_BUTTON_SPELL))
+                    ab->uState = ACTIONBUTTON_CHANGED;
+
+                player->SendActionButtons(1);
+                buttonSlots.erase(SPELL_SHAMAN_LAVA_BURST);
+            }
+            // Check if the button was for Fire Nova (replacing Icy Nova)
+            if (buttonSlots.find(SPELL_SHAMAN_FIRE_NOVA_TRIGGER) != buttonSlots.end())
+            {
+                uint8 button = buttonSlots[SPELL_SHAMAN_FIRE_NOVA_TRIGGER];
+
+                // Remove Icy Nova
+                player->removeActionButton(button);
+
+                // Add Fire Nova back
+                if (ActionButton* ab = player->addActionButton(button, SPELL_SHAMAN_FIRE_NOVA_TRIGGER, ACTION_BUTTON_SPELL))
+                    ab->uState = ACTIONBUTTON_CHANGED;
+
+                player->SendActionButtons(1);
+                buttonSlots.erase(SPELL_SHAMAN_FIRE_NOVA_TRIGGER);
+            }
+
+            // Clean up the map
+            if (buttonSlots.empty())
+                PlayerButtonSlots.erase(player->GetGUID());
+
+            // Unlearn Cryo Burst if still known
+            if (player->HasSpell(SPELL_SHAMAN_CRYO_BURST))
+                player->RemoveSpell(SPELL_SHAMAN_CRYO_BURST, true);
+            // Unlearn Icy Nova if still known
+            if (player->HasSpell(SPELL_SHAMAN_ICY_NOVA_TRIGGER))
+                player->RemoveSpell(SPELL_SHAMAN_ICY_NOVA_TRIGGER, true);
+        }
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectApplyFn(spell_sha_cryo_burst::OnApply, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_sha_cryo_burst::OnRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// 91370 - Icy Nova
+class spell_sha_icy_nova : public SpellScript
+{
+    PrepareSpellScript(spell_sha_icy_nova);
+
+    bool Validate(SpellInfo const* spellInfo) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_ICY_NOVA });
+    }
+
+    SpellCastResult CheckWaterTotem()
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        // water totem
+        if (Creature* totem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_WATER]))
+        {
+            if (!caster->IsWithinDistInMap(totem, caster->GetSpellMaxRangeForTarget(totem, GetSpellInfo())))
+                return SPELL_FAILED_OUT_OF_RANGE;
+            return SPELL_CAST_OK;
+        }
+        else
+        {
+            caster->GetSession()->SendNotification("You must have a Water Totem active.");
+            return SPELL_FAILED_CUSTOM_ERROR;
+        }
+    }
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        if (!caster)
+            return;
+        if (Creature* totem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_WATER]))
+            if (totem->IsTotem())
+                caster->CastSpell(totem, SPELL_SHAMAN_ICY_NOVA, true);
+    }
+
+    void Register() override
+    {
+        OnCheckCast += SpellCheckCastFn(spell_sha_icy_nova::CheckWaterTotem);
+        OnEffectHitTarget += SpellEffectFn(spell_sha_icy_nova::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
     }
 };
 
@@ -2851,4 +3029,6 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_ascension_fire);
     RegisterSpellScript(spell_sha_ascension_fire_dummy);
     RegisterSpellScript(spell_sha_magma_blast);
+    RegisterSpellScript(spell_sha_cryo_burst);
+    RegisterSpellScript(spell_sha_icy_nova);
 }

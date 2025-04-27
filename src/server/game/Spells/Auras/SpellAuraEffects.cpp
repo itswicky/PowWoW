@@ -2070,9 +2070,15 @@ void AuraEffect::HandleAuraTransform(AuraApplication const* aurApp, uint8 mode, 
                     // Ascension: Fire
                     case 91360:
                         target->SetDisplayId(32762);
+                        break;
                     // Ascension: Lightning
                     case 91364:
                         target->SetDisplayId(32760);
+                        break;
+                    // Ascension: Frost
+                    case 91366:
+                        target->SetDisplayId(32766);
+                        break;
                     default:
                         break;
                 }
