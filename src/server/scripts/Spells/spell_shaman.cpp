@@ -21,12 +21,13 @@
  * Scriptnames of files in this file should be prefixed with "spell_sha_".
  */
 
-#include "ScriptMgr.h"
+#include "DatabaseEnv.h"
 #include "GridNotifiers.h"
 #include "Item.h"
-#include "ObjectAccessor.h"
 #include "Map.h"
+#include "ObjectAccessor.h"
 #include "Player.h"
+#include "ScriptMgr.h"
 #include "SpellAuraEffects.h"
 #include "SpellHistory.h"
 #include "SpellMgr.h"
@@ -121,6 +122,8 @@ enum ShamanSpells
     SPELL_SHAMAN_ELE_CONVERGENCE                = 91350,
     SPELL_SHAMAN_VOLCANIC_IMPACT                = 91352,
     SPELL_SHAMAN_LAVA_BURST_OVERLOAD            = 91356,
+    SPELL_SHAMAN_LIGHTNING_BOLT                 = 91204,
+    SPELL_SHAMAN_MAGMA_BLAST                    = 91362,
 };
 
 enum ShamanSpellIcons
@@ -2700,6 +2703,86 @@ class spell_sha_ascension_fire_dummy : public SpellScript
     }
 };
 
+// PlayerButtonSlots - Store which button we swapped for each player
+static std::unordered_map<ObjectGuid, uint8> PlayerButtonSlots;
+
+// 91358 - Ascension Fire (Magma Blast action bar swapping)
+class spell_sha_magma_blast : public AuraScript
+{
+    PrepareAuraScript(spell_sha_magma_blast);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_MAGMA_BLAST });
+    }
+
+    void OnApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        if (Player* player = GetTarget()->ToPlayer())
+        {
+            // Teach Magma Blast if not already known
+            if (!player->HasSpell(SPELL_SHAMAN_MAGMA_BLAST))
+                player->LearnSpell(SPELL_SHAMAN_MAGMA_BLAST, false);
+
+            for (uint8 button = 0; button < MAX_ACTION_BUTTONS; ++button)
+            {
+                ActionButton const* actionButton = player->GetActionButton(button);
+                if (!actionButton)
+                    continue;
+
+                if (actionButton->GetType() == ACTION_BUTTON_SPELL && actionButton->GetAction() == SPELL_SHAMAN_LIGHTNING_BOLT)
+                {
+                    // Save the button index for this player
+                    PlayerButtonSlots[player->GetGUID()] = button;
+
+                    // Remove Lightning Bolt
+                    player->removeActionButton(button);
+
+                    // Add Magma Blast
+                    if (ActionButton* ab = player->addActionButton(button, SPELL_SHAMAN_MAGMA_BLAST, ACTION_BUTTON_SPELL))
+                        ab->uState = ACTIONBUTTON_CHANGED;
+
+                    player->SendActionButtons(1);
+                    break;
+                }
+            }
+        }
+    }
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        if (Player* player = GetTarget()->ToPlayer())
+        {
+            auto it = PlayerButtonSlots.find(player->GetGUID());
+            if (it != PlayerButtonSlots.end())
+            {
+                uint8 button = it->second;
+
+                // Remove Magma Blast
+                player->removeActionButton(button);
+
+                // Add Lightning Bolt back
+                if (ActionButton* ab = player->addActionButton(button, SPELL_SHAMAN_LIGHTNING_BOLT, ACTION_BUTTON_SPELL))
+                    ab->uState = ACTIONBUTTON_CHANGED;
+
+                player->SendActionButtons(1);
+
+                // Clean up
+                PlayerButtonSlots.erase(it);
+            }
+            // Unlearn Magma Blast if still known
+            if (player->HasSpell(SPELL_SHAMAN_MAGMA_BLAST))
+                player->RemoveSpell(SPELL_SHAMAN_MAGMA_BLAST, true);
+        }
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectApplyFn(spell_sha_magma_blast::OnApply, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_sha_magma_blast::OnRemove, EFFECT_0, SPELL_AURA_ADD_PCT_MODIFIER, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_ancestral_awakening);
@@ -2767,4 +2850,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_volcanic_impact);
     RegisterSpellScript(spell_sha_ascension_fire);
     RegisterSpellScript(spell_sha_ascension_fire_dummy);
+    RegisterSpellScript(spell_sha_magma_blast);
 }

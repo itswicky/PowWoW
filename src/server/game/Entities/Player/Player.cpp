@@ -3548,7 +3548,7 @@ void Player::LearnSpell(uint32 spell_id, bool dependent, uint32 fromSkill /*= 0*
 
     bool learning = AddSpell(spell_id, active, true, dependent, false, false, fromSkill);
 
-    // prevent duplicated entires in spell book, also not send if not in world (loading)
+    // prevent duplicated entries in spell book, also not send if not in world (loading)
     if (learning && IsInWorld())
     {
         WorldPacket data(SMSG_LEARNED_SPELL, 6);
