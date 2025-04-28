@@ -674,7 +674,7 @@ class spell_sha_flametongue_weapon : public AuraScript
         // calculate penalty from passive aura as is the one with level
         float const factorMod = player->CalculateSpellpowerCoefficientLevelPenalty(GetSpellInfo());
 
-        float const spCoeff = 0.03811f;
+        float const spCoeff = 0.018f;
         spellPowerBonus *= spCoeff * attackSpeed * factorMod;
 
         // All done, now proc damage
