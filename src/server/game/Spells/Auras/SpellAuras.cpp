@@ -1861,7 +1861,41 @@ bool Aura::CanStackWith(Aura const* existingAura) const
     // check spell specific stack rules
     if (m_spellInfo->IsAuraExclusiveBySpecificWith(existingSpellInfo)
         || (sameCaster && m_spellInfo->IsAuraExclusiveBySpecificPerCasterWith(existingSpellInfo)))
+    {
+        TC_LOG_INFO("server.worldserver", "Found spell with stack rule.\n");
+        if (Unit* caster = GetCaster())
+            if (caster->HasAura(91377)) // Elemental Arsenal
+            {
+                TC_LOG_INFO("server.worldserver", "Found Elemental Arsenal.\n");
+                if (m_spellInfo->GetSpellSpecific() == SPELL_SPECIFIC_WEAPON_IMBUE
+                    && existingSpellInfo->GetSpellSpecific() == SPELL_SPECIFIC_WEAPON_IMBUE)
+                {
+                    TC_LOG_INFO("server.worldserver", "Found Shaman weapon imbue.\n");
+                    // Count how many Weapon Imbues from this caster are already active
+                    uint32 imbueCount = 0;
+                    for (const auto& auraAppPair : caster->GetAppliedAuras())
+                    {
+                        Aura* activeAura = auraAppPair.second->GetBase();
+                        if (!activeAura || activeAura == this) // <-- skip the aura we're trying to apply
+                            continue;
+
+                        if (activeAura->GetCasterGUID() != caster->GetGUID())
+                            continue;
+
+                        SpellInfo const* activeSpellInfo = activeAura->GetSpellInfo();
+                        if (activeSpellInfo && activeSpellInfo->GetSpellSpecific() == SPELL_SPECIFIC_WEAPON_IMBUE)
+                        {
+                            TC_LOG_INFO("server.worldserver", "Added to imbueCount.\n");
+                            ++imbueCount;
+                        }
+                    }
+                    if (imbueCount < 2)
+                        return true; // Allow stacking if under the limit
+                }
+            }
+
         return false;
+    }
 
     // check spell group stack rules
     switch (sSpellMgr->CheckSpellGroupStackRules(m_spellInfo, existingSpellInfo))

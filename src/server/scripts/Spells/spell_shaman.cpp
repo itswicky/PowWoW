@@ -24,6 +24,7 @@
 #include "DatabaseEnv.h"
 #include "GridNotifiers.h"
 #include "Item.h"
+#include "Log.h"
 #include "Map.h"
 #include "ObjectAccessor.h"
 #include "Player.h"
@@ -130,6 +131,7 @@ enum ShamanSpells
     SPELL_SHAMAN_ICY_NOVA_TRIGGER               = 91370,
     SPELL_SHAMAN_FIRE_NOVA                      = 91229,
     SPELL_SHAMAN_FIRE_NOVA_TRIGGER              = 91228,
+    SPELL_SHAMAN_LIGHTNING_SHIELD_ORB           = 91212,
 };
 
 enum ShamanSpellIcons
@@ -2961,6 +2963,58 @@ class spell_sha_icy_nova : public SpellScript
     }
 };
 
+// 91382 - Static Shock
+class spell_sha_static_shock2 : public AuraScript
+{
+    PrepareAuraScript(spell_sha_static_shock2);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_LIGHTNING_SHIELD_ORB });
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Player* player = eventInfo.GetActor()->ToPlayer();
+        if (!player)
+            return false;
+
+        // Get the item in the corresponding hand
+        Item* item = player->GetWeaponForAttack(BASE_ATTACK, true);
+        if (!item || !item->IsEquipped())
+            return false;
+
+        // Full chance for Two-Handed weapons
+        if (item->GetTemplate()->InventoryType == INVTYPE_2HWEAPON)
+            return true;
+            
+        // Half chance for One-Handed weapons
+        return roll_chance_i(50);
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+
+        Unit* caster = eventInfo.GetActor();
+
+        // Get Lightning Shield
+        AuraEffect const* lightningShield = caster->GetAuraEffect(SPELL_AURA_PROC_TRIGGER_SPELL, SPELLFAMILY_SHAMAN, 0x00000400, 0x00000000, 0x00000000, caster->GetGUID());
+        if (!lightningShield)
+            return;
+
+        uint32 spellId = SPELL_SHAMAN_LIGHTNING_SHIELD_ORB;
+        eventInfo.GetActor()->CastSpell(eventInfo.GetProcTarget(), spellId, aurEff);
+        lightningShield->GetBase()->DropCharge();
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_sha_static_shock2::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_sha_static_shock2::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_ancestral_awakening);
@@ -3031,4 +3085,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_magma_blast);
     RegisterSpellScript(spell_sha_cryo_burst);
     RegisterSpellScript(spell_sha_icy_nova);
+    RegisterSpellScript(spell_sha_static_shock2);
 }
