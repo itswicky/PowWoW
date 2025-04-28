@@ -556,7 +556,7 @@ void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, bo
     float const attackPowerMod = std::max(GetAPMultiplier(attType, normalized), 0.25f);
 
     float baseValue  = GetFlatModifierValue(unitMod, BASE_VALUE);
-    baseValue += GetTotalAttackPowerValue(attType) / 14.0f * attackPowerMod;
+    baseValue += GetTotalAttackPowerValue(attType) / 28.0f * attackPowerMod;
 
     float basePct    = GetPctModifierValue(unitMod, BASE_PCT);
     float totalValue = GetFlatModifierValue(unitMod, TOTAL_VALUE);
