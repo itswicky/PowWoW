@@ -2064,8 +2064,7 @@ class spell_sha_windfury_weapon2 : public AuraScript
 
         Item* item = ASSERT_NOTNULL(player->GetWeaponForAttack(attType));
 
-        // Currently don't proc with extra attack power
-        /*int32 extraAttackPower = 0;
+        int32 extraAttackPower = 0;
         SpellInfo const* spellInfo = sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_WINDFURY_NEW);
         extraAttackPower = spellInfo->GetEffect(EFFECT_1).CalcValue(player);
 
@@ -2073,10 +2072,10 @@ class spell_sha_windfury_weapon2 : public AuraScript
             return;
 
         // Value gained from additional AP
-        int32 amount = static_cast<int32>(extraAttackPower / 14.f * player->GetAttackTime(attType) / 1000.f);
+        int32 amount = static_cast<int32>(extraAttackPower / 28.f * player->GetAttackTime(attType) / 1000.f);
 
         CastSpellExtraArgs args(aurEff);
-        args.AddSpellBP0(amount);*/
+        args.AddSpellBP0(amount);
         // Attack twice
         for (uint8 i = 0; i < 2; ++i)
             player->CastSpell(eventInfo.GetProcTarget(), spellId);
