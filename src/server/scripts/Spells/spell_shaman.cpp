@@ -132,6 +132,9 @@ enum ShamanSpells
     SPELL_SHAMAN_FIRE_NOVA                      = 91229,
     SPELL_SHAMAN_FIRE_NOVA_TRIGGER              = 91228,
     SPELL_SHAMAN_LIGHTNING_SHIELD_ORB           = 91212,
+    SPELL_SHAMAN_THRASH_TRIGGER                 = 91384,
+    SPELL_SHAMAN_THRASH                         = 91385,
+    SPELL_SHAMAN_REVERBERATION                  = 91386,
 };
 
 enum ShamanSpellIcons
@@ -3015,6 +3018,63 @@ class spell_sha_static_shock2 : public AuraScript
     }
 };
 
+class spell_sha_thrash : public SpellScript
+{
+    PrepareSpellScript(spell_sha_thrash);
+
+    bool Validate(SpellInfo const* spellInfo) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_THRASH });
+    }
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        Unit* target = GetExplTargetUnit();
+        if (!caster || !target)
+            return;
+
+        for (uint8 i = 0; i < 3; ++i)
+            caster->CastSpell(target, SPELL_SHAMAN_THRASH);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_sha_thrash::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
+// 91380 - Maelstrom Weapon
+class spell_sha_maelstrom_weapon_extra : public AuraScript
+{
+    PrepareAuraScript(spell_sha_maelstrom_weapon_extra);
+
+    bool Validate(SpellInfo const* spellInfo) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_REVERBERATION });
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = eventInfo.GetActor();
+        SpellInfo const* spellInfo = eventInfo.GetSpellInfo();
+        // Melee attacks pass
+        if (!spellInfo)
+            return true;
+
+        // Requires Reverberation to trigger from Shocks
+        if ((spellInfo->SpellFamilyFlags[0] & 0x90100000)/* && !caster->HasAura(SPELL_SHAMAN_REVERBERATION)*/) // Depricated
+            return false;
+
+        return true;
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_sha_maelstrom_weapon_extra::CheckProc);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_ancestral_awakening);
@@ -3086,4 +3146,6 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_cryo_burst);
     RegisterSpellScript(spell_sha_icy_nova);
     RegisterSpellScript(spell_sha_static_shock2);
+    RegisterSpellScript(spell_sha_thrash);
+    RegisterSpellScript(spell_sha_maelstrom_weapon_extra);
 }
