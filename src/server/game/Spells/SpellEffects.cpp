@@ -3135,7 +3135,17 @@ void Spell::EffectWeaponDmg()
             // Skyshatter Harness item set bonus
             // Stormstrike
             if (AuraEffect* aurEff = unitCaster->IsScriptOverriden(m_spellInfo, 5634))
+            {
                 unitCaster->CastSpell(nullptr, 38430, aurEff);
+                break;
+            }
+            // Lava Lash
+            if (m_spellInfo->Id == 91312)
+            {
+                // Flametongue Weapon
+                if (unitCaster->HasAura(91219))
+                    totalDamagePercentMod *= 1.25f;
+            }
             break;
         }
         case SPELLFAMILY_DRUID:

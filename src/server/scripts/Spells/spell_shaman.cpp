@@ -2168,7 +2168,7 @@ class spell_sha_lava_lash2 : public SpellScript
             if (Item* offhand = caster->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
             {
                 // Damage is increased by 25% if your off-hand weapon is enchanted with Flametongue.
-                if (AuraEffect const* aurEff = caster->GetAuraEffect(SPELL_AURA_DUMMY, SPELLFAMILY_SHAMAN, 0x200000, 0, 0))
+                if (caster->HasAura(91219))
                     AddPct(hitDamage, damage);  // Removed check for off-hand enchantment since we apply it as an aura now
                 SetHitDamage(hitDamage);
             }
@@ -2988,8 +2988,8 @@ class spell_sha_static_shock2 : public AuraScript
         if (item->GetTemplate()->InventoryType == INVTYPE_2HWEAPON)
             return true;
             
-        // Half chance for One-Handed weapons
-        return roll_chance_i(50);
+        // Reduced chance for One-Handed weapons
+        return roll_chance_i(60);
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
