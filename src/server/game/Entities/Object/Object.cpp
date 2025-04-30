@@ -2460,7 +2460,7 @@ SpellMissInfo WorldObject::MagicSpellHitResult(Unit* victim, SpellInfo const* sp
 
     SpellSchoolMask schoolMask = spellInfo->GetSchoolMask();
     // PvP - PvE spell misschances per leveldif > 2
-    int32 lchance = victim->GetTypeId() == TYPEID_PLAYER ? 7 : 11;
+    int32 lchance = victim->GetTypeId() == TYPEID_PLAYER ? 3 : 5;
     int32 thisLevel = GetLevelForTarget(victim);
     if (GetTypeId() == TYPEID_UNIT && ToCreature()->IsTrigger())
         thisLevel = std::max<int32>(thisLevel, spellInfo->SpellLevel);
@@ -2469,9 +2469,12 @@ SpellMissInfo WorldObject::MagicSpellHitResult(Unit* victim, SpellInfo const* sp
     // Base hit chance from attacker and victim levels
     int32 modHitChance;
     if (leveldif < 3)
-        modHitChance = 96 - leveldif;
+        modHitChance = 100 - leveldif;
     else
-        modHitChance = 94 - (leveldif - 2) * lchance;
+        modHitChance = 100 - (leveldif - 2) * lchance;
+
+    if (modHitChance < 95)
+        modHitChance = 95;
 
     // Spellmod from SPELLMOD_RESIST_MISS_CHANCE
     if (Player* modOwner = GetSpellModOwner())

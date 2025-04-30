@@ -2667,6 +2667,7 @@ float Unit::GetUnitParryChance(WeaponAttackType attType, Unit const* victim) con
     return std::max(chance, 0.0f);
 }
 
+// No longer called
 float Unit::GetUnitMissChance() const
 {
     float miss_chance = 5.0f;
@@ -12157,15 +12158,26 @@ float Unit::MeleeSpellMissChance(Unit const* victim, WeaponAttackType attType, i
         return 0.f;
 
     //calculate miss chance
-    float missChance = victim->GetUnitMissChance();
+    float missChance = 0.0f;
+
+    int32 lchance = victim->GetTypeId() == TYPEID_PLAYER ? 3 : 5;
+    int levelDiff = int(victim->GetLevel()) - int(GetLevel());
+
+    if (levelDiff >= 3)
+        missChance = 5.0f;
+    else if (levelDiff <= 0)
+        missChance = 0.0f;
+    else
+        missChance = float(levelDiff);
 
     // melee attacks while dual wielding have +19% chance to miss
     if (!spellId && haveOffhandWeapon())
         missChance += 19.0f;
 
+    // Moved level based logic to above
     // bonus from skills is 0.04%
-    //miss_chance -= skillDiff * 0.04f;
-    int32 diff = -skillDiff;
+    // miss_chance -= skillDiff * 0.04f;
+    /*int32 diff = -skillDiff;
     if (victim->GetTypeId() == TYPEID_PLAYER)
         missChance += diff > 0 ? diff * 0.04f : diff * 0.02f;
     else
@@ -12174,7 +12186,7 @@ float Unit::MeleeSpellMissChance(Unit const* victim, WeaponAttackType attType, i
         float levelFactor = victim->GetLevelForTarget(this);
         if (levelFactor < 10.f)
             missChance *= (levelFactor / 10.f);
-    }
+    }*/
 
     // Spellmod from SPELLMOD_RESIST_MISS_CHANCE
     float resistMissChance = 100.0f;
