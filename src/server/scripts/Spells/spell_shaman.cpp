@@ -135,6 +135,10 @@ enum ShamanSpells
     SPELL_SHAMAN_THRASH_TRIGGER                 = 91384,
     SPELL_SHAMAN_THRASH                         = 91385,
     SPELL_SHAMAN_REVERBERATION                  = 91386,
+    SPELL_SHAMAN_STORM_CRASH_AURA               = 91395,
+    SPELL_SHAMAN_FERAL_LUNGE                    = 91390,
+    SPELL_SHAMAN_GHOST_WOLF                     = 91232,
+    SPELL_SHAMAN_STORM_CRASH_VISUAL             = 91397,
 };
 
 enum ShamanSpellIcons
@@ -3071,6 +3075,58 @@ class spell_sha_maelstrom_weapon_extra : public AuraScript
     }
 };
 
+// 91394 - Storm Crash
+class spell_sha_storm_crash : public SpellScript
+{
+    PrepareSpellScript(spell_sha_storm_crash);
+
+    bool Validate(SpellInfo const* spellInfo) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_STORM_CRASH_AURA });
+    }
+
+    void HandleEffect(SpellEffIndex /*effIndex*/)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        Unit* target = GetHitUnit();
+        if (!caster || !target)
+            return;
+
+        caster->CastSpell(target, SPELL_SHAMAN_STORM_CRASH_AURA);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_sha_storm_crash::HandleEffect, EFFECT_1, SPELL_EFFECT_DUMMY);
+    }
+};
+
+// 91390 - Feral Lunge
+class spell_sha_feral_lunge : public SpellScript
+{
+    PrepareSpellScript(spell_sha_feral_lunge);
+
+    bool Validate(SpellInfo const* spellInfo) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_FERAL_LUNGE });
+    }
+
+    void HandleEffect(SpellEffIndex /*effIndex*/)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        if (!caster)
+            return;
+
+        if (!caster->HasAura(SPELL_SHAMAN_GHOST_WOLF))
+            caster->CastSpell(caster, SPELL_SHAMAN_GHOST_WOLF);        
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_sha_feral_lunge::HandleEffect, EFFECT_2, SPELL_EFFECT_DUMMY);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_ancestral_awakening);
@@ -3144,4 +3200,6 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_static_shock2);
     RegisterSpellScript(spell_sha_thrash);
     RegisterSpellScript(spell_sha_maelstrom_weapon_extra);
+    RegisterSpellScript(spell_sha_storm_crash);
+    RegisterSpellScript(spell_sha_feral_lunge);
 }
