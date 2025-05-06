@@ -2197,7 +2197,7 @@ class spell_sha_flame_shock_2 : public SpellScript
     void HandleDummy(SpellEffIndex /*effIndex*/)
     {
         Player* caster = GetCaster()->ToPlayer();
-        Unit* target = GetExplTargetUnit();
+        Unit* target = GetHitUnit();
         if (!caster || !target)
             return;
 
@@ -2233,10 +2233,6 @@ class spell_sha_flame_shock_2 : public SpellScript
             durNew = durMax;
         else
             durNew = durCurrent + durMod;
-
-        // Case for Ascension: Fire. Need to refresh duration on chained targets.
-        if (caster->HasAura(91358))
-            caster->CastSpell(target, SPELL_SHAMAN_FLAMESHOCK_DOT);
 
         // Extend duration
         aura->SetDuration(durNew);
