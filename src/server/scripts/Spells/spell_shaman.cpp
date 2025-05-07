@@ -139,6 +139,7 @@ enum ShamanSpells
     SPELL_SHAMAN_FERAL_LUNGE                    = 91390,
     SPELL_SHAMAN_GHOST_WOLF                     = 91232,
     SPELL_SHAMAN_STORM_CRASH_VISUAL             = 91397,
+    SPELL_SHAMAN_PYROCLASTIC_CASCADE            = 91399,
 };
 
 enum ShamanSpellIcons
@@ -2156,103 +2157,6 @@ class spell_sha_elemental_bond : public SpellScript
     }
 };
 
-// 91312 - Lava Lash (Custom)
-class spell_sha_lava_lash2 : public SpellScript
-{
-    PrepareSpellScript(spell_sha_lava_lash2);
-
-    bool Load() override
-    {
-        return GetCaster()->GetTypeId() == TYPEID_PLAYER;
-    }
-
-    void HandleDummy(SpellEffIndex /*effIndex*/)
-    {
-        if (Player* caster = GetCaster()->ToPlayer())
-        {
-            int32 damage = GetEffectValue();
-            int32 hitDamage = GetHitDamage();
-            if (Item* offhand = caster->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
-            {
-                // Damage is increased by 25% if your off-hand weapon is enchanted with Flametongue.
-                if (caster->HasAura(91219))
-                    AddPct(hitDamage, damage);  // Removed check for off-hand enchantment since we apply it as an aura now
-                SetHitDamage(hitDamage);
-            }
-        }
-    }
-
-    void Register() override
-    {
-        OnEffectHitTarget += SpellEffectFn(spell_sha_lava_lash2::HandleDummy, EFFECT_1, SPELL_EFFECT_DUMMY);
-    }
-};
-
-// 91218 - Flame Shock (Custom)
-class spell_sha_flame_shock_2 : public SpellScript
-{
-    PrepareSpellScript(spell_sha_flame_shock_2);
-
-    bool Validate(SpellInfo const* spellInfo) override
-    {
-        return ValidateSpellInfo({ SPELL_SHAMAN_FLAMESHOCK_DOT });
-    }
-
-    void HandleDummy(SpellEffIndex /*effIndex*/)
-    {
-        Player* caster = GetCaster()->ToPlayer();
-        Unit* target = GetHitUnit();
-        if (!caster || !target)
-            return;
-
-        AuraEffect* flameShock = target->GetAuraEffect(
-            SPELL_AURA_PERIODIC_DAMAGE,
-            SPELLFAMILY_SHAMAN,
-            0x10000000, 0x0, 0x0,
-            caster->GetGUID());
-
-        // If no active Flame Shock DoT, apply it
-        if (!flameShock)
-        {
-            caster->CastSpell(target, SPELL_SHAMAN_FLAMESHOCK_DOT);
-            return;
-        }
-
-        Aura* aura = flameShock->GetBase();
-        SpellInfo const* flameShockDot = sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_FLAMESHOCK_DOT);
-
-        int32 durCurrent = aura->GetDuration();                                 // Current duration
-        int32 durBase = flameShockDot->GetDuration();                           // Duration stored in dbc
-        if (caster->HasAura(91351))                                             // Volcanic Impact
-            durBase += 6 * IN_MILLISECONDS;
-        int32 durMod = durBase * caster->GetFloatValue(UNIT_MOD_CAST_SPEED);    // Duration modified by spell cast speed
-        int32 tickDuration = caster->HasAura(91351) ? durMod / 8 : durMod / 6;  // time per tick (can we do this without dividing b y a static value?)
-        int32 twoTicks = tickDuration * 2;                                      // time for 2 ticks to occur
-        int32 durMax = durMod + twoTicks;                                       // Maximum duration we will allow (2 additional ticks)
-
-        int32 durNew = durMod;
-
-        // if current duration is less than max duration then we can extend
-        if (durCurrent >= twoTicks)
-            durNew = durMax;
-        else
-            durNew = durCurrent + durMod;
-
-        // Extend duration
-        aura->SetDuration(durNew);
-        aura->SetMaxDuration(durNew);
-
-        // Refresh DoT effect
-        flameShock->ChangeAmount(flameShock->CalculateAmount(flameShock->GetCaster()), false);
-        flameShock->CalculatePeriodic(caster, false, false);
-    }
-
-    void Register() override
-    {
-        OnEffectHitTarget += SpellEffectFn(spell_sha_flame_shock_2::HandleDummy, EFFECT_1, SPELL_EFFECT_DUMMY);
-    }
-};
-
 // 91262 Awaken Elements
 class spell_sha_awaken_elements : public SpellScript
 {
@@ -3127,6 +3031,148 @@ class spell_sha_feral_lunge : public SpellScript
     }
 };
 
+// 91312 - Lava Lash (Pyroclastic Cascade effect)
+class spell_sha_pyroclastic_cascade : public SpellScript
+{
+    PrepareSpellScript(spell_sha_pyroclastic_cascade);
+
+    bool Validate(SpellInfo const* spellInfo) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_PYROCLASTIC_CASCADE });
+    }
+
+    bool Load() override
+    {
+        return GetCaster()->GetTypeId() == TYPEID_PLAYER;
+    }
+
+    void HandleAfterHit()
+    {
+        Unit* caster = GetCaster();
+        Unit* target = GetHitUnit();
+        if (!caster || !target)
+            return;
+
+        if (!caster->HasAura(SPELL_SHAMAN_PYROCLASTIC_CASCADE))
+            return;
+
+        // Check if primary target has Flame Shock from this caster
+        Aura* flameShock = target->GetAura(SPELL_SHAMAN_FLAMESHOCK_DOT, caster->GetGUID());
+        if (!flameShock)
+            return;
+
+        // Determine tick interval and total duration
+        int32 tickInterval = flameShock->GetEffect(EFFECT_1)->GetAmplitude();
+        if (tickInterval <= 0)
+            return;
+
+        // Spread 2 ticks by default
+        int32 spreadDuration = tickInterval * 2;
+        int32 currentDuration = flameShock->GetDuration();
+        
+        if (currentDuration < spreadDuration)
+            spreadDuration = currentDuration;
+
+        // Find up to 3 nearby enemy targets within 10 yards
+        std::list<Unit*> targets;
+        Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(caster, caster, 10.0f);
+        Trinity::UnitListSearcher<Trinity::AnyUnfriendlyUnitInObjectRangeCheck> searcher(caster, targets, u_check);
+        Cell::VisitAllObjects(caster, searcher, 10.0f);
+        uint8 spreadCount = 0;
+        for (std::list<Unit*>::iterator itr = targets.begin(); itr != targets.end(); ++itr)
+        {
+            Unit* nearbyTarget = *itr;
+            if (!nearbyTarget || !nearbyTarget->IsAlive() || nearbyTarget->HasAura(SPELL_SHAMAN_FLAMESHOCK_DOT) ||
+                !caster->IsValidAttackTarget(nearbyTarget) || nearbyTarget == target)
+                continue;
+
+            // Cast Flame Shock on the new target
+            caster->CastSpell(nearbyTarget, SPELL_SHAMAN_FLAMESHOCK_DOT, true);
+
+            // Adjust the newly applied aura
+            Aura* newFlameShock = nearbyTarget->GetAura(SPELL_SHAMAN_FLAMESHOCK_DOT, caster->GetGUID());
+            if (!newFlameShock)
+                continue;
+
+            newFlameShock->SetDuration(spreadDuration);
+            newFlameShock->SetMaxDuration(spreadDuration);
+
+            if (++spreadCount >= 3)
+                break;
+        }
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_sha_pyroclastic_cascade::HandleAfterHit);
+    }
+};
+
+// 91218 - Flame Shock (Custom)
+class spell_sha_flame_shock_2 : public SpellScript
+{
+    PrepareSpellScript(spell_sha_flame_shock_2);
+
+    bool Validate(SpellInfo const* spellInfo) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_FLAMESHOCK_DOT });
+    }
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        Unit* target = GetHitUnit();
+        if (!caster || !target)
+            return;
+
+        AuraEffect* flameShock = target->GetAuraEffect(
+            SPELL_AURA_PERIODIC_DAMAGE,
+            SPELLFAMILY_SHAMAN,
+            0x10000000, 0x0, 0x0,
+            caster->GetGUID());
+
+        // If no active Flame Shock DoT, apply it
+        if (!flameShock)
+        {
+            caster->CastSpell(target, SPELL_SHAMAN_FLAMESHOCK_DOT);
+            return;
+        }
+
+        Aura* aura = flameShock->GetBase();
+        SpellInfo const* flameShockDot = sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_FLAMESHOCK_DOT);
+
+        int32 durCurrent = aura->GetDuration();                                 // Current duration
+        int32 durBase = flameShockDot->GetDuration();                           // Duration stored in dbc
+        if (caster->HasAura(91351) || caster->HasAura(91399))                   // Volcanic Impact and Pyroclastic Cascade
+            durBase += 6 * IN_MILLISECONDS;
+        int32 durMod = durBase * caster->GetFloatValue(UNIT_MOD_CAST_SPEED);    // Duration modified by spell cast speed
+        int32 tickDuration = caster->HasAura(91351) ? durMod / 8 : durMod / 6;  // time per tick (can we do this without dividing b y a static value?)
+        int32 twoTicks = tickDuration * 2;                                      // time for 2 ticks to occur
+        int32 durMax = durMod + twoTicks;                                       // Maximum duration we will allow (2 additional ticks)
+
+        int32 durNew = durMod;
+
+        // if current duration is less than max duration then we can extend
+        if (durCurrent >= twoTicks)
+            durNew = durMax;
+        else
+            durNew = durCurrent + durMod;
+
+        // Extend duration
+        aura->SetDuration(durNew);
+        aura->SetMaxDuration(durNew);
+
+        // Refresh DoT effect
+        flameShock->ChangeAmount(flameShock->CalculateAmount(flameShock->GetCaster()), false);
+        flameShock->CalculatePeriodic(caster, false, false);
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_sha_flame_shock_2::HandleDummy, EFFECT_1, SPELL_EFFECT_DUMMY);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_ancestral_awakening);
@@ -3183,7 +3229,6 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_elemental_bond);
     RegisterSpellScript(spell_sha_awaken_elements);
     RegisterSpellScript(spell_sha_windfury_weapon2);
-    RegisterSpellScript(spell_sha_lava_lash2);
     RegisterSpellScript(spell_sha_lightning_overload2);
     RegisterSpellScript(spell_sha_flame_shock_2);
     RegisterSpellScript(spell_sha_lightning_strike);
@@ -3202,4 +3247,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_maelstrom_weapon_extra);
     RegisterSpellScript(spell_sha_storm_crash);
     RegisterSpellScript(spell_sha_feral_lunge);
+    RegisterSpellScript(spell_sha_pyroclastic_cascade);
 }

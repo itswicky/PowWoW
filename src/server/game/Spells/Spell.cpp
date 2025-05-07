@@ -7678,8 +7678,8 @@ void Spell::DoEffectOnLaunchTarget(TargetInfo& targetInfo, float multiplier, Spe
     {
         float actualMultiplier = m_damageMultipliers[spellEffectInfo.EffectIndex];
 
-        // Volcanic Impact - deals full damage to initial target then reduces damage only once in the chain
-        if (m_spellInfo->Id == 91352)
+        // Volcanic Impact + Pyroclastic Cascade - deals full damage to initial target then reduces damage only once in the chain
+        if (m_spellInfo->Id == 91352 || (m_spellInfo->Id == 91205 && m_caster->ToUnit()->HasAura(91399)))
         {
             if (targetInfo.ChainBounceIndex == 0)
                 actualMultiplier *= 1.0f;
