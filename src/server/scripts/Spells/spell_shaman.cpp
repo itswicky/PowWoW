@@ -140,6 +140,16 @@ enum ShamanSpells
     SPELL_SHAMAN_GHOST_WOLF                     = 91232,
     SPELL_SHAMAN_STORM_CRASH_VISUAL             = 91397,
     SPELL_SHAMAN_PYROCLASTIC_CASCADE            = 91399,
+    SPELL_SHAMAN_STORM_FROST_FIRE               = 91401,
+    SPELL_SHAMAN_FLAMETONGUE_WEAPON             = 91219,
+    SPELL_SHAMAN_FROSTBRAND_WEAPON              = 91301,
+    SPELL_SHAMAN_WINDFURY_WEAPON                = 91305,
+    SPELL_SHAMAN_EARTHLIVING_WEAPON             = 91303,
+    SPELL_SHAMAN_STORMFORGE_WEAPON              = 91400, // PLACEHODER; MUST CHANGE
+    SPELL_SHAMAN_STORMFLURRY                    = 91387,
+    SPELL_SHAMAN_STORM                          = 91402,
+    SPELL_SHAMAN_FIRE                           = 91403,
+    SPELL_SHAMAN_FROST                          = 91404,
 };
 
 enum ShamanSpellIcons
@@ -2967,7 +2977,7 @@ class spell_sha_maelstrom_weapon_extra : public AuraScript
             return true;
 
         // Requires Reverberation to trigger from Shocks
-        if ((spellInfo->SpellFamilyFlags[0] & 0x90100000)/* && !caster->HasAura(SPELL_SHAMAN_REVERBERATION)*/) // Depricated
+        if ((spellInfo->SpellFamilyFlags[0] & 0x90100000) && !caster->HasAura(SPELL_SHAMAN_REVERBERATION))
             return false;
 
         return true;
@@ -3173,6 +3183,98 @@ class spell_sha_flame_shock_2 : public SpellScript
     }
 };
 
+// 91401 - Storm, Frost, and Fire
+class spell_sha_storm_frost_fire : public AuraScript
+{
+    PrepareAuraScript(spell_sha_storm_frost_fire);
+
+    bool Validate(SpellInfo const* spellInfo) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_STORM_FROST_FIRE });
+    }
+
+    void HandleProc(ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+
+        Unit* caster = eventInfo.GetActor();
+        Unit* target = eventInfo.GetProcTarget();
+        if (!caster || !target)
+            return;
+
+        int32 stormChance = 35;
+        int32 frostChance = 35;
+        int32 fireChance = 35;
+
+        // Weapon buffs double respective element proc chances
+        if (caster->HasAura(SPELL_SHAMAN_WINDFURY_WEAPON))
+            stormChance *= 2;
+        if (caster->HasAura(SPELL_SHAMAN_FROSTBRAND_WEAPON))
+            frostChance *= 2;
+        if (caster->HasAura(SPELL_SHAMAN_FLAMETONGUE_WEAPON))
+            fireChance *= 2;
+
+        // Stormforged/Stormflurry synergy
+        bool hasStormforge = caster->HasAura(SPELL_SHAMAN_STORMFORGE_WEAPON);
+        bool hasStormflurry = caster->HasAura(SPELL_SHAMAN_STORMFLURRY);
+        if (hasStormforge && hasStormflurry)
+        {
+            stormChance += 18;
+            frostChance += 18;
+            fireChance += 18;
+        }
+        else if (hasStormforge || hasStormflurry)
+        {
+            stormChance += 12;
+            frostChance += 12;
+            fireChance += 12;
+        }
+
+        // Attempt procs
+        bool procSuccess = false;
+
+        if (roll_chance_i(stormChance))
+        {
+            caster->CastSpell(target, SPELL_SHAMAN_STORM, true);
+            procSuccess = true;
+        }
+        if (roll_chance_i(frostChance))
+        {
+            caster->CastSpell(target, SPELL_SHAMAN_FROST, true);
+            procSuccess = true;
+        }
+        if (roll_chance_i(fireChance))
+        {
+            caster->CastSpell(target, SPELL_SHAMAN_FIRE, true);
+            procSuccess = true;
+        }
+
+        // Failsafe: guarantee one effect
+        if (!procSuccess)
+        {
+            switch (irand(0, 2))
+            {
+                case 0:
+                    caster->CastSpell(target, SPELL_SHAMAN_STORM, true);
+                    break;
+                case 1:
+                    caster->CastSpell(target, SPELL_SHAMAN_FROST, true);
+                    break;
+                case 2:
+                    caster->CastSpell(target, SPELL_SHAMAN_FIRE, true);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnProc += AuraProcFn(spell_sha_storm_frost_fire::HandleProc);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_ancestral_awakening);
@@ -3248,4 +3350,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_storm_crash);
     RegisterSpellScript(spell_sha_feral_lunge);
     RegisterSpellScript(spell_sha_pyroclastic_cascade);
+    RegisterSpellScript(spell_sha_storm_frost_fire);
 }
