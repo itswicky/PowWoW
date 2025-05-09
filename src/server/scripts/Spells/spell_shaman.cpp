@@ -145,7 +145,7 @@ enum ShamanSpells
     SPELL_SHAMAN_FROSTBRAND_WEAPON              = 91301,
     SPELL_SHAMAN_WINDFURY_WEAPON                = 91305,
     SPELL_SHAMAN_EARTHLIVING_WEAPON             = 91303,
-    SPELL_SHAMAN_STORMFORGE_WEAPON              = 91400, // PLACEHODER; MUST CHANGE
+    SPELL_SHAMAN_STORMFORGE_WEAPON              = 91409,
     SPELL_SHAMAN_STORMFLURRY                    = 91387,
     SPELL_SHAMAN_STORM                          = 91402,
     SPELL_SHAMAN_FIRE                           = 91403,
@@ -692,7 +692,7 @@ class spell_sha_flametongue_weapon : public AuraScript
         // calculate penalty from passive aura as is the one with level
         float const factorMod = player->CalculateSpellpowerCoefficientLevelPenalty(GetSpellInfo());
 
-        float const spCoeff = 0.018f;
+        float const spCoeff = 0.011f;
         spellPowerBonus *= spCoeff * attackSpeed * factorMod;
 
         // All done, now proc damage
@@ -2983,9 +2983,26 @@ class spell_sha_maelstrom_weapon_extra : public AuraScript
         return true;
     }
 
+    void HandleProc(ProcEventInfo& eventInfo)
+    {
+        Unit* caster = eventInfo.GetActor();
+        if (!caster)
+            return;
+
+        //uint32 stackCount = caster->GetAuraCount(91381);
+
+        if (Aura* maelstromWeapon = caster->GetAura(91381, caster->GetGUID()))
+            if (!caster->HasAura(SPELL_SHAMAN_STORMFORGE_WEAPON) && maelstromWeapon->GetStackAmount() >= 5)
+            {
+                PreventDefaultAction();
+                maelstromWeapon->RefreshDuration(false);
+            }            
+    }
+
     void Register() override
     {
         DoCheckProc += AuraCheckProcFn(spell_sha_maelstrom_weapon_extra::CheckProc);
+        OnProc += AuraProcFn(spell_sha_maelstrom_weapon_extra::HandleProc);
     }
 };
 
@@ -3202,9 +3219,9 @@ class spell_sha_storm_frost_fire : public AuraScript
         if (!caster || !target)
             return;
 
-        int32 stormChance = 35;
-        int32 frostChance = 35;
-        int32 fireChance = 35;
+        int32 stormChance = 38;
+        int32 frostChance = 38;
+        int32 fireChance = 38;
 
         // Weapon buffs double respective element proc chances
         if (caster->HasAura(SPELL_SHAMAN_WINDFURY_WEAPON))
@@ -3219,15 +3236,15 @@ class spell_sha_storm_frost_fire : public AuraScript
         bool hasStormflurry = caster->HasAura(SPELL_SHAMAN_STORMFLURRY);
         if (hasStormforge && hasStormflurry)
         {
-            stormChance += 18;
-            frostChance += 18;
-            fireChance += 18;
+            stormChance += 10;
+            frostChance += 10;
+            fireChance += 10;
         }
         else if (hasStormforge || hasStormflurry)
         {
-            stormChance += 12;
-            frostChance += 12;
-            fireChance += 12;
+            stormChance += 6;
+            frostChance += 6;
+            fireChance += 6;
         }
 
         // Attempt procs
@@ -3272,6 +3289,38 @@ class spell_sha_storm_frost_fire : public AuraScript
     void Register() override
     {
         OnProc += AuraProcFn(spell_sha_storm_frost_fire::HandleProc);
+    }
+};
+
+// 91408 - Tempest Shield
+class spell_sha_tempest_shield : public AuraScript
+{
+    PrepareAuraScript(spell_sha_tempest_shield);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_LIGHTNING_SHIELD_ORB });
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+
+        Unit* caster = eventInfo.GetActor();
+
+        // Get Lightning Shield
+        AuraEffect const* lightningShield = caster->GetAuraEffect(SPELL_AURA_PROC_TRIGGER_SPELL, SPELLFAMILY_SHAMAN, 0x00000400, 0x00000000, 0x00000000, caster->GetGUID());
+        if (!lightningShield)
+            return;
+
+        uint32 spellId = SPELL_SHAMAN_LIGHTNING_SHIELD_ORB;
+        eventInfo.GetActor()->CastSpell(eventInfo.GetProcTarget(), spellId, aurEff);
+        lightningShield->GetBase()->DropCharge();
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_sha_tempest_shield::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -3351,4 +3400,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_feral_lunge);
     RegisterSpellScript(spell_sha_pyroclastic_cascade);
     RegisterSpellScript(spell_sha_storm_frost_fire);
+    RegisterSpellScript(spell_sha_tempest_shield);
 }
