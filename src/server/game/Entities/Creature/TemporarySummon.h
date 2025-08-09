@@ -27,7 +27,8 @@ enum PetEntry : uint32
     PET_RISEN_ALLY      = 30230,
 
     // Shaman pet
-    PET_SPIRIT_WOLF     = 29264
+    PET_SPIRIT_WOLF     = 29264,
+    PET_PRIMAL_WOLF     = 50002
 };
 
 struct SummonPropertiesEntry;
@@ -85,7 +86,7 @@ class TC_GAME_API Minion : public TempSummon
         bool IsRisenAlly() const { return GetEntry() == PET_RISEN_ALLY; }
 
         // Shaman pet
-        bool IsSpiritWolf() const { return GetEntry() == PET_SPIRIT_WOLF; } // Spirit wolf from feral spirits
+        bool IsSpiritWolf() const { return GetEntry() == PET_SPIRIT_WOLF || GetEntry() == PET_PRIMAL_WOLF; } // Spirit wolf from feral spirits
 
         bool IsGuardianPet() const;
 

@@ -1057,6 +1057,7 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
                     break;
                 }
                 case 29264: // Feral Spirit
+                case 50002: // Primal Spirit
                 {
                     if (!pInfo)
                         SetCreateHealth(30*petlevel);
