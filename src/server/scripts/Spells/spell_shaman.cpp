@@ -150,6 +150,7 @@ enum ShamanSpells
     SPELL_SHAMAN_STORM                          = 91402,
     SPELL_SHAMAN_FIRE                           = 91403,
     SPELL_SHAMAN_FROST                          = 91404,
+    SPELL_SHAMAN_BOOMING_THUNDER                = 91329,
 };
 
 enum ShamanSpellIcons
@@ -2497,8 +2498,7 @@ class spell_sha_elemental_warding : public AuraScript
 
         CastSpellExtraArgs args(aurEff);
         args.AddSpellBP0(amount);
-        caster->CastSpell(caster, triggerspell, args);
-            
+        caster->CastSpell(caster, triggerspell, args);            
     }
 
     void Register() override
@@ -2582,6 +2582,43 @@ class spell_sha_volcanic_impact : public AuraScript
     void Register() override
     {
         DoCheckProc += AuraCheckProcFn(spell_sha_volcanic_impact::CheckProc);
+    }
+};
+
+// 91363 - Ascension: Lightning (Booming Thunder Effect)
+class spell_sha_ascension_light : public AuraScript
+{
+    PrepareAuraScript(spell_sha_ascension_light);
+
+    bool Validate(SpellInfo const* spellInfo) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_BOOMING_THUNDER });
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+
+        Unit* caster = GetCaster();
+        if (!caster)
+            return;
+
+        uint32 currentStack = caster->GetAuraCount(91329); // Booming Thunder
+        int32 addStack = 1;
+        uint32 totalStack = currentStack + addStack;
+        uint32 maxStack = sSpellMgr->AssertSpellInfo(91329)->StackAmount;
+
+        if (currentStack == maxStack)
+            return;
+        else if (totalStack > maxStack)
+            caster->SetAuraStack(91329, caster, maxStack);
+        else
+            caster->SetAuraStack(91329, caster, totalStack);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_sha_ascension_light::HandleProc, EFFECT_2, SPELL_AURA_ADD_FLAT_MODIFIER);
     }
 };
 
@@ -3401,4 +3438,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_pyroclastic_cascade);
     RegisterSpellScript(spell_sha_storm_frost_fire);
     RegisterSpellScript(spell_sha_tempest_shield);
+    RegisterSpellScript(spell_sha_ascension_light);
 }
