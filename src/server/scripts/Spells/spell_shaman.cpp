@@ -2282,7 +2282,7 @@ class spell_sha_awaken_elements : public SpellScript
         if (fireBond)
         {
             fireTotem->CastSpell(target, SPELL_SHAMAN_AWAKEN_FIRE);
-            caster->GetSpellHistory()->ModifyCooldown(SPELL_SHAMAN_AWAKEN_ELEMENTS, -(12 * IN_MILLISECONDS));
+            caster->GetSpellHistory()->ModifyCooldown(SPELL_SHAMAN_AWAKEN_ELEMENTS, -(4 * IN_MILLISECONDS));
         }
         else if (earthBond)
             earthTotem->CastSpell(earthTotem, SPELL_SHAMAN_AWAKEN_EARTH);
