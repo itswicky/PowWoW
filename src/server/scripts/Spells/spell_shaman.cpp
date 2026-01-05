@@ -152,6 +152,7 @@ enum ShamanSpells
     SPELL_SHAMAN_FROST                          = 91404,
     SPELL_SHAMAN_BOOMING_THUNDER                = 91329,
     SPELL_SHAMAN_TOTEMIC_UPHEAVAL               = 91412,
+    SPELL_SHAMAN_ELEMENTAL_HARMONY              = 91414,
 };
 
 enum ShamanSpellIcons
@@ -3390,6 +3391,38 @@ class spell_sha_totemic_upheaval : public AuraScript
     }
 };
 
+// 91413 Elemental Harmony
+class spell_sha_elemental_harmony : public AuraScript
+{
+    PrepareAuraScript(spell_sha_elemental_harmony);
+
+    bool Validate(SpellInfo const* spellInfo) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_ELEMENTAL_HARMONY });
+    }
+
+    void OnPeriodic(AuraEffect const* /*aurEff*/)
+    {
+        Player* caster = GetCaster()->ToPlayer();
+        Creature* fireTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_FIRE]);
+        Creature* earthTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_EARTH]);
+        Creature* waterTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_WATER]);
+        Creature* airTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_AIR]);
+
+        if (fireTotem && earthTotem && waterTotem && airTotem && !caster->HasAura(SPELL_SHAMAN_ELEMENTAL_HARMONY))
+            caster->AddAura(SPELL_SHAMAN_ELEMENTAL_HARMONY, caster);
+        else if (fireTotem && earthTotem && waterTotem && airTotem && caster->HasAura(SPELL_SHAMAN_ELEMENTAL_HARMONY))
+            return;
+        else
+            caster->RemoveAura(SPELL_SHAMAN_ELEMENTAL_HARMONY);
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(spell_sha_elemental_harmony::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_ancestral_awakening);
@@ -3469,4 +3502,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_tempest_shield);
     RegisterSpellScript(spell_sha_ascension_light);
     RegisterSpellScript(spell_sha_totemic_upheaval);
+    RegisterSpellScript(spell_sha_elemental_harmony);
 }
