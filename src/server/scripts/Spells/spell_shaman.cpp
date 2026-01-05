@@ -2310,7 +2310,7 @@ class spell_sha_awaken_elements : public SpellScript
                 waterTotem->CastSpell(waterTotem, SPELL_SHAMAN_AWAKEN_WATER);
 
             // Reduce cooldown for the caster
-            caster->GetSpellHistory()->ModifyCooldown(SPELL_SHAMAN_AWAKEN_ELEMENTS, -(12 * IN_MILLISECONDS));
+            caster->GetSpellHistory()->ModifyCooldown(SPELL_SHAMAN_AWAKEN_ELEMENTS, -(4 * IN_MILLISECONDS));
         }
         else if (airBond)
             airTotem->CastSpell(airTotem, SPELL_SHAMAN_AWAKEN_AIR);
