@@ -151,6 +151,7 @@ enum ShamanSpells
     SPELL_SHAMAN_FIRE                           = 91403,
     SPELL_SHAMAN_FROST                          = 91404,
     SPELL_SHAMAN_BOOMING_THUNDER                = 91329,
+    SPELL_SHAMAN_TOTEMIC_UPHEAVAL               = 91412,
 };
 
 enum ShamanSpellIcons
@@ -3361,6 +3362,34 @@ class spell_sha_tempest_shield : public AuraScript
     }
 };
 
+// 91411 Totemic Upheaval
+class spell_sha_totemic_upheaval : public AuraScript
+{
+    PrepareAuraScript(spell_sha_totemic_upheaval);
+
+    bool Validate(SpellInfo const* spellInfo) override
+    {
+        return ValidateSpellInfo({ SPELL_SHAMAN_TOTEMIC_UPHEAVAL });
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+        Player* caster = GetCaster()->ToPlayer();
+        Creature* earthTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_EARTH]);
+
+        if (!earthTotem)
+            return;
+
+        earthTotem->CastSpell(earthTotem, SPELL_SHAMAN_TOTEMIC_UPHEAVAL);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_sha_totemic_upheaval::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     RegisterSpellScript(spell_sha_ancestral_awakening);
@@ -3439,4 +3468,5 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript(spell_sha_storm_frost_fire);
     RegisterSpellScript(spell_sha_tempest_shield);
     RegisterSpellScript(spell_sha_ascension_light);
+    RegisterSpellScript(spell_sha_totemic_upheaval);
 }
