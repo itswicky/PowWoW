@@ -2665,10 +2665,17 @@ class spell_sha_ascension_fire_dummy : public SpellScript
         if (!caster)
             return;
 
-        if (Creature* fireTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_FIRE]))
-            caster->CastSpell(caster, SPELL_SHAMAN_FIRE_NOVA_TRIGGER, TriggerCastFlags(TRIGGERED_FULL_MASK & ~TRIGGERED_IGNORE_SPELL_AND_CATEGORY_CD));
-        else
+        if (!caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_FIRE]))
             return;
+
+        SpellInfo const* fireNova = sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_FIRE_NOVA_TRIGGER);
+
+        caster->GetSpellHistory()->ResetCooldown(SPELL_SHAMAN_FIRE_NOVA_TRIGGER, true);
+        caster->CastSpell(caster, SPELL_SHAMAN_FIRE_NOVA_TRIGGER, true);
+        
+        WorldPacket data;
+        caster->GetSpellHistory()->BuildCooldownPacket(data, SPELL_COOLDOWN_FLAG_NONE, SPELL_SHAMAN_FIRE_NOVA_TRIGGER, 8 * IN_MILLISECONDS);
+        caster->SendDirectMessage(&data);
     }
 
     void Register() override
