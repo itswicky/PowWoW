@@ -153,6 +153,7 @@ enum ShamanSpells
     SPELL_SHAMAN_BOOMING_THUNDER                = 91329,
     SPELL_SHAMAN_TOTEMIC_UPHEAVAL               = 91412,
     SPELL_SHAMAN_ELEMENTAL_HARMONY              = 91414,
+    SPELL_SHAMAN_REVERBERATING_STORM            = 91354,
 };
 
 enum ShamanSpellIcons
@@ -1023,70 +1024,6 @@ class spell_sha_lightning_overload : public AuraScript
     void Register() override
     {
         OnEffectProc += AuraEffectProcFn(spell_sha_lightning_overload::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
-    }
-};
-
-// 91321 - Lightning Overload custom
-class spell_sha_lightning_overload2 : public AuraScript
-{
-    PrepareAuraScript(spell_sha_lightning_overload2);
-
-    bool Validate(SpellInfo const* /*spellInfo*/) override
-    {
-        return ValidateSpellInfo(
-            {
-                SPELL_SHAMAN_LIGHTNING_BOLT_OVERLOAD,
-                SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD,
-                SPELL_SHAMAN_LAVA_BURST_OVERLOAD
-            });
-    }
-
-    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
-    {
-        PreventDefaultAction();
-
-        Unit* caster = eventInfo.GetActor();
-        if (!caster)
-            return;
-
-        SpellInfo const* spellInfo = eventInfo.GetSpellInfo();
-        if (!spellInfo)
-            return;
-
-        uint32 spellId;
-
-        // Do not allow to proc off self
-        // We have to add this to be able to include Reverberating Storm logic later
-        if (!caster->HasAura(91354)/*Reverberating Storm*/ && spellInfo->SpellFamilyFlags[1] & 0x30000000)
-            return;
-        // Lightning Bolt
-        else if ((spellInfo->SpellFamilyFlags[0] & 0x1 && !(spellInfo->SpellFamilyFlags[1] & 0x10000000)) ||
-            (caster->HasAura(91354) && spellInfo->SpellFamilyFlags[1] & 0x10000000))
-            spellId = SPELL_SHAMAN_LIGHTNING_BOLT_OVERLOAD;
-        // Chain Lightning
-        else if ((spellInfo->SpellFamilyFlags[0] & 0x2 && !(spellInfo->SpellFamilyFlags[1] & 0x20000000)) ||
-            (caster->HasAura(91354) && spellInfo->SpellFamilyFlags[1] & 0x20000000))
-        {
-            // Chain lightning has [LightOverload_Proc_Chance] / [Max_Number_of_Targets] chance to proc of each individual target hit.
-            // A maxed LO would have a 33% / 3 = 11% chance to proc of each target.
-            // LO chance was already "accounted" at the proc chance roll, now need to divide the chance by [Max_Number_of_Targets]
-            float chance = 100.0f / spellInfo->GetEffect(EFFECT_0).ChainTarget;
-            if (!roll_chance_f(chance))
-                return;
-
-            spellId = SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD;
-        }
-        else if (spellInfo->SpellFamilyFlags[1] & 0x1000 && caster->HasAura(91355) && !(spellInfo->SpellFamilyFlags[1] & 0x40000000)) // Lava Infusion
-            spellId = SPELL_SHAMAN_LAVA_BURST_OVERLOAD;
-        else
-            return;
-
-        caster->CastSpell(eventInfo.GetProcTarget(), spellId, aurEff);
-    }
-
-    void Register() override
-    {
-        OnEffectProc += AuraEffectProcFn(spell_sha_lightning_overload2::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
     }
 };
 
@@ -2327,6 +2264,71 @@ class spell_sha_awaken_elements : public SpellScript
     }
 };
 
+// 91321 - Lightning Overload custom
+class spell_sha_lightning_overload2 : public AuraScript
+{
+    PrepareAuraScript(spell_sha_lightning_overload2);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo(
+            {
+                SPELL_SHAMAN_LIGHTNING_BOLT_OVERLOAD,
+                SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD,
+                SPELL_SHAMAN_LAVA_BURST_OVERLOAD
+            });
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        PreventDefaultAction();
+
+        Unit* caster = eventInfo.GetActor();
+        if (!caster)
+            return;
+
+        SpellInfo const* spellInfo = eventInfo.GetSpellInfo();
+        if (!spellInfo)
+            return;
+
+        uint32 spellId;
+
+        // Do not allow to proc off self
+        // We have to add this to be able to include Reverberating Storm logic later
+        if (!caster->HasAura(SPELL_SHAMAN_REVERBERATING_STORM) && spellInfo->SpellFamilyFlags[1] & 0x6000)
+            return;
+        // Lightning Bolt
+        else if ((spellInfo->SpellFamilyFlags[0] & 0x1 && !(spellInfo->SpellFamilyFlags[1] & 0x2000)) ||
+            (caster->HasAura(SPELL_SHAMAN_REVERBERATING_STORM) && spellInfo->SpellFamilyFlags[1] & 0x2000))
+            spellId = SPELL_SHAMAN_LIGHTNING_BOLT_OVERLOAD;
+        // Chain Lightning
+        else if ((spellInfo->SpellFamilyFlags[0] & 0x2 && !(spellInfo->SpellFamilyFlags[1] & 0x4000)) ||
+            (caster->HasAura(SPELL_SHAMAN_REVERBERATING_STORM) && spellInfo->SpellFamilyFlags[1] & 0x4000))
+        {
+            // Chain lightning has [LightOverload_Proc_Chance] / [Max_Number_of_Targets] chance to proc of each individual target hit.
+            // A maxed LO would have a 33% / 3 = 11% chance to proc of each target.
+            // LO chance was already "accounted" at the proc chance roll, now need to divide the chance by [Max_Number_of_Targets]
+            float chance = 100.0f / spellInfo->GetEffect(EFFECT_0).ChainTarget;
+            if (!roll_chance_f(chance))
+                return;
+
+            spellId = SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD;
+        }
+        // Lava Infusion
+        else if (spellInfo->SpellFamilyFlags[1] & 0x20000 && caster->HasAura(91355) && !(spellInfo->SpellFamilyFlags[1] & 0x8000))
+            spellId = SPELL_SHAMAN_LAVA_BURST_OVERLOAD;
+        else
+            return;
+
+        caster->CastSpell(eventInfo.GetProcTarget(), spellId, aurEff);
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_sha_lightning_overload2::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+    }
+};
+
 // 91333 - Lightning Strike
 class spell_sha_lightning_strike : public AuraScript
 {
@@ -2574,7 +2576,7 @@ class spell_sha_volcanic_impact : public AuraScript
         // Return if target does not have caster's Flame Shock
         if (!target->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE,
             SPELLFAMILY_SHAMAN,
-            0x10000000, 0x0, 0x0,
+            0x20, 0x0, 0x0,
             caster->GetGUID()))
             return false;
 
@@ -2664,7 +2666,7 @@ class spell_sha_ascension_fire_dummy : public SpellScript
             return;
 
         if (Creature* fireTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_FIRE]))
-            caster->CastSpell(caster, SPELL_SHAMAN_FIRE_NOVA_TRIGGER, true);
+            caster->CastSpell(caster, SPELL_SHAMAN_FIRE_NOVA_TRIGGER, TRIGGERED_IGNORE_SPELL_AND_CATEGORY_CD);
         else
             return;
     }
@@ -2955,7 +2957,7 @@ class spell_sha_static_shock2 : public AuraScript
         Unit* caster = eventInfo.GetActor();
 
         // Get Lightning Shield
-        AuraEffect const* lightningShield = caster->GetAuraEffect(SPELL_AURA_PROC_TRIGGER_SPELL, SPELLFAMILY_SHAMAN, 0x00000400, 0x00000000, 0x00000000, caster->GetGUID());
+        AuraEffect const* lightningShield = caster->GetAuraEffect(SPELL_AURA_PROC_TRIGGER_SPELL, SPELLFAMILY_SHAMAN, 0x00000200, 0x00000000, 0x00000000, caster->GetGUID());
         if (!lightningShield)
             return;
 
@@ -3194,7 +3196,7 @@ class spell_sha_flame_shock_2 : public SpellScript
         AuraEffect* flameShock = target->GetAuraEffect(
             SPELL_AURA_PERIODIC_DAMAGE,
             SPELLFAMILY_SHAMAN,
-            0x10000000, 0x0, 0x0,
+            0x20, 0x0, 0x0,
             caster->GetGUID());
 
         // If no active Flame Shock DoT, apply it
@@ -3348,7 +3350,7 @@ class spell_sha_tempest_shield : public AuraScript
         Unit* caster = eventInfo.GetActor();
 
         // Get Lightning Shield
-        AuraEffect const* lightningShield = caster->GetAuraEffect(SPELL_AURA_PROC_TRIGGER_SPELL, SPELLFAMILY_SHAMAN, 0x00000400, 0x00000000, 0x00000000, caster->GetGUID());
+        AuraEffect const* lightningShield = caster->GetAuraEffect(SPELL_AURA_PROC_TRIGGER_SPELL, SPELLFAMILY_SHAMAN, 0x00000200, 0x00000000, 0x00000000, caster->GetGUID());
         if (!lightningShield)
             return;
 
