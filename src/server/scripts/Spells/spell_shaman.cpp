@@ -420,7 +420,7 @@ class spell_sha_clearcasting : public AuraScript
         Unit const* owner = GetUnitOwner();
         if (Aura const* aura = owner->GetAuraOfRankedSpell(SPELL_SHAMAN_ELEMENTAL_OATH, owner->GetGUID()))
             amount = aura->GetSpellInfo()->GetEffect(EFFECT_1).CalcValue();
-        else if (Aura const* aura = owner->GetAura(91327))
+        else if (Aura const* aura = owner->GetAura(91327)) // Elemental Oath
             amount = aura->GetSpellInfo()->GetEffect(EFFECT_0).CalcValue();
     }
 
@@ -2315,7 +2315,7 @@ class spell_sha_lightning_overload2 : public AuraScript
             spellId = SPELL_SHAMAN_CHAIN_LIGHTNING_OVERLOAD;
         }
         // Lava Infusion
-        else if (spellInfo->SpellFamilyFlags[1] & 0x20000 && caster->HasAura(91355) && !(spellInfo->SpellFamilyFlags[1] & 0x8000))
+        else if (spellInfo->SpellFamilyFlags[0] & 0x20000 && caster->HasAura(91355) && !(spellInfo->SpellFamilyFlags[1] & 0x8000))
             spellId = SPELL_SHAMAN_LAVA_BURST_OVERLOAD;
         else
             return;
@@ -2666,7 +2666,7 @@ class spell_sha_ascension_fire_dummy : public SpellScript
             return;
 
         if (Creature* fireTotem = caster->GetMap()->GetCreature(caster->m_SummonSlot[SUMMON_SLOT_TOTEM_FIRE]))
-            caster->CastSpell(caster, SPELL_SHAMAN_FIRE_NOVA_TRIGGER, TRIGGERED_IGNORE_SPELL_AND_CATEGORY_CD);
+            caster->CastSpell(caster, SPELL_SHAMAN_FIRE_NOVA_TRIGGER, TriggerCastFlags(TRIGGERED_FULL_MASK & ~TRIGGERED_IGNORE_SPELL_AND_CATEGORY_CD));
         else
             return;
     }
