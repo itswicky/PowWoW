@@ -688,7 +688,7 @@ void Spell::EffectSchoolDMG()
                     break;
 
                 // Lava Burst - Erupting Force
-                if (m_spellInfo->SpellFamilyFlags[1] & 0x1000)
+                if (m_spellInfo->SpellFamilyFlags[0] & 0x00020000)
                 {
                     if (unitCaster->HasAura(91324))
                     {

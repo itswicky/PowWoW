@@ -3016,7 +3016,7 @@ class spell_sha_maelstrom_weapon_extra : public AuraScript
             return true;
 
         // Requires Reverberation to trigger from Shocks
-        if ((spellInfo->SpellFamilyFlags[0] & 0x90100000) && !caster->HasAura(SPELL_SHAMAN_REVERBERATION))
+        if ((spellInfo->SpellFamilyFlags[0] & 0x40000000) && !caster->HasAura(SPELL_SHAMAN_REVERBERATION))
             return false;
 
         return true;
