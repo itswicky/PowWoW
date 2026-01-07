@@ -3147,7 +3147,7 @@ void Spell::EffectWeaponDmg()
                     totalDamagePercentMod *= 1.25f;
             }
             // Glacial Slam
-            if (m_spellInfo->Id == 91405)
+            if (m_spellInfo->Id == 91406)
             {
                 // Frostbrand Weapon
                 if (unitCaster->HasAura(91301))

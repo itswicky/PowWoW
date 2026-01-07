@@ -3143,10 +3143,6 @@ class spell_sha_pyroclastic_cascade : public SpellScript
 
         // Spread 2 ticks by default
         int32 spreadDuration = tickInterval * 2;
-        int32 currentDuration = flameShock->GetDuration();
-        
-        if (currentDuration < spreadDuration)
-            spreadDuration = currentDuration;
 
         // Find up to 3 nearby enemy targets within 10 yards
         std::list<Unit*> targets;

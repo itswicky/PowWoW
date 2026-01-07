@@ -2190,9 +2190,7 @@ void SpellInfo::_LoadSpellSpecific()
             case SPELLFAMILY_SHAMAN:
             {
                 // family flags 10 (Lightning), 42 (Earth), 37 (Water), proc shield from T2 8 pieces bonus
-                if (SpellFamilyFlags[1] & 0x420
-                    || SpellFamilyFlags[0] & 0x20000000
-                    || Id == 23552)
+                if (SpellFamilyFlags[0] & 0x20000000)
                     return SPELL_SPECIFIC_ELEMENTAL_SHIELD;
 
                 if (SpellFamilyFlags[0] & 0x10000000)
